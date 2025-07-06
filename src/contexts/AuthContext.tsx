@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     if (!configured) {
       // Simulação de login quando Supabase não está configurado
-      console.log('Simulating login with:', email)
+      console.log('Supabase not configured. Simulating login.')
       setUser({ email, id: 'demo-user' } as User)
       return {}
     }
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string) => {
     if (!configured) {
       // Simulação de cadastro quando Supabase não está configurado
-      console.log('Simulating signup with:', email)
+      console.log('Supabase not configured. Simulating signup.')
       setUser({ email, id: 'demo-user' } as User)
       return {}
     }
