@@ -43,6 +43,7 @@ interface IndexProps {
 }
 
 const Index = ({ projects }: IndexProps) => {
+  // Estatísticas dos projetos
   const stats = {
     totalProjects: projects.length,
     inProgress: projects.filter(p => p.status === "in-progress").length,
@@ -75,7 +76,7 @@ const Index = ({ projects }: IndexProps) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard de Projetos</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
               <p className="text-gray-600 mt-1">Visualize o progresso e estatísticas dos seus projetos</p>
             </div>
           </div>

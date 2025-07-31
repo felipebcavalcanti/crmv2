@@ -1,3 +1,4 @@
+// src/components/AppSidebar.tsx
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Home, 
@@ -19,8 +20,9 @@ export const AppSidebar = ({ projects = [] }: AppSidebarProps) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
 
+  // Menu atualizado com nova rota do dashboard
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: Home, path: "/" },
+    { id: "dashboard", label: "Dashboard", icon: Home, path: "/dashboard" },
     { id: "projects", label: "Projetos", icon: TrendingUp, path: "/projects" },
     { id: "properties", label: "Gestão de Imóveis", icon: Building, path: "/properties" },
     { id: "marketing", label: "Marketing e Integrações", icon: TrendingUp, path: "/marketing" },
@@ -35,6 +37,8 @@ export const AppSidebar = ({ projects = [] }: AppSidebarProps) => {
   const handleLogout = async () => {
     try {
       await signOut();
+      // Agora redireciona para a raiz que é a página de login
+      navigate('/');
       console.log("Logout realizado");
     } catch (error) {
       console.error("Erro no logout:", error);
@@ -88,7 +92,7 @@ export const AppSidebar = ({ projects = [] }: AppSidebarProps) => {
                 onClick={() => handleItemClick(item)}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm transition-colors ${
                   isActive 
-                    ? 'bg-blue-100 text-blue-900 font-medium' 
+                    ? 'bg-blue-600 text-white shadow-lg' 
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -99,34 +103,31 @@ export const AppSidebar = ({ projects = [] }: AppSidebarProps) => {
           })}
         </div>
 
-        {projects.length > 0 && (
-          <>
-            <div className="h-px bg-gray-200 my-4" />
-            <div className="bg-gray-50 rounded-lg p-3">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">Estatísticas Rápidas</h4>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Projetos Ativos</span>
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full">{stats.active}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Concluídos</span>
-                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">{stats.completed}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Em Atraso</span>
-                  <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full">{stats.overdue}</span>
-                </div>
-              </div>
+        {/* Estatísticas dos Projetos */}
+        <div className="mt-6 p-3 bg-gray-50 rounded-lg">
+          <h4 className="text-xs font-medium text-gray-700 mb-2">Estatísticas</h4>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Ativos:</span>
+              <span className="font-medium text-blue-600">{stats.active}</span>
             </div>
-          </>
-        )}
+            <div className="flex justify-between">
+              <span className="text-gray-600">Concluídos:</span>
+              <span className="font-medium text-green-600">{stats.completed}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Atrasados:</span>
+              <span className="font-medium text-red-600">{stats.overdue}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="p-4">
+      {/* Botão de Logout */}
+      <div className="p-4 border-t border-gray-200">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+          className="w-full flex items-center space-x-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors text-sm"
         >
           <LogOut className="w-4 h-4" />
           <span>Sair</span>

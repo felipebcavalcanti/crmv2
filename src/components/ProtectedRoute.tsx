@@ -1,3 +1,4 @@
+// src/components/ProtectedRoute.tsx
 import { Navigate } from 'react-router-dom'
 import { AuthGuard } from '@/components/auth/AuthGuard'
 
@@ -7,7 +8,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   return (
-    <AuthGuard fallback={<Navigate to="/login" replace />}>
+    <AuthGuard fallback={<Navigate to="/" replace />}>
       {children}
     </AuthGuard>
   )

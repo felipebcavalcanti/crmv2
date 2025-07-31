@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
     Home,
-    Settings,
     TrendingUp,
     LogOut,
     X,
@@ -26,21 +25,63 @@ interface SidebarProps {
 export const Sidebar = ({ isOpen, onClose, projects }: SidebarProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [activeItem, setActiveItem] = useState("dashboard");
+    const [openMenu, setOpenMenu] = useState<string | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
     const { user, signOut } = useAuth();
 
     const menuItems = [
         { id: "dashboard", label: "Dashboard", icon: Home, path: "/" },
-        { id: "projects", label: "Projetos", icon: TrendingUp, path: "/projects" },
-        { id: "properties", label: "Gestão de Imóveis", icon: Building, path: "/properties" },
-        { id: "marketing", label: "Marketing e Integrações", icon: TrendingUp, path: "/marketing" },
-        { id: "leads", label: "CRM - Gestão de Leads", icon: Users, path: "/leads" },
-        { id: "settings", label: "Configurações", icon: Settings, path: "/settings" },
+        {
+            id: "projects",
+            label: "Projetos",
+            icon: TrendingUp,
+            path: "/projects",
+            submenus: [
+                { id: "projects-overview", label: "Visão Geral", path: "/projects" },
+                { id: "projects-weekly", label: "Acompanhamento Semanal", path: "/projects/weekly" },
+                { id: "projects-checkpoints", label: "Checkpoints", path: "/projects/checkpoints" },
+            ]
+        },
+        {
+            id: "properties",
+            label: "Imóveis",
+            icon: Building,
+            path: "/properties",
+            submenus: [
+                { id: "properties-list", label: "Lista de Imóveis", path: "/properties" },
+                { id: "properties-new", label: "Cadastrar Novo", path: "/properties/new" },
+            ]
+        },
+        {
+            id: "leads",
+            label: "Leads (CRM)",
+            icon: Users,
+            path: "/leads",
+            submenus: [
+                { id: "leads-funnel", label: "Funil de Vendas", path: "/leads" },
+                { id: "leads-details", label: "Detalhes do Lead", path: "/leads/details" },
+                { id: "leads-interactions", label: "Interações", path: "/leads/interactions" },
+            ]
+        },
+        {
+            id: "marketing",
+            label: "Marketing",
+            icon: TrendingUp,
+            path: "/marketing",
+            submenus: [
+                { id: "marketing-campaigns", label: "Campanhas", path: "/marketing" },
+                { id: "marketing-templates", label: "Templates", path: "/marketing/templates" },
+                { id: "marketing-social", label: "Redes Sociais", path: "/marketing/social" },
+            ]
+        },
     ];
 
     const handleItemClick = (item) => {
         setActiveItem(item.id);
+        if (item.submenus) {
+            setOpenMenu(openMenu === item.id ? null : item.id);
+        }
         navigate(item.path);
         console.log(`Navegando para: ${item.path}`);
     };
@@ -121,7 +162,7 @@ export const Sidebar = ({ isOpen, onClose, projects }: SidebarProps) => {
                         <ul className="space-y-2">
                             {menuItems.map((item) => {
                                 const Icon = item.icon;
-                                const isActive = location.pathname === item.path;
+                                const isActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path);
 
                                 return (
                                     <li key={item.id}>
@@ -139,6 +180,24 @@ export const Sidebar = ({ isOpen, onClose, projects }: SidebarProps) => {
                                             <Icon className="w-4 h-4 mr-3" />
                                             {item.label}
                                         </Button>
+                                        {item.submenus && openMenu === item.id && (
+                                            <ul className="pl-8 space-y-2 py-2">
+                                                {item.submenus.map((submenu) => {
+                                                    const isSubActive = location.pathname === submenu.path;
+                                                    return (
+                                                        <li key={submenu.id}>
+                                                            <Button
+                                                                variant={isSubActive ? "secondary" : "ghost"}
+                                                                className={`w-full justify-start h-8 text-sm ${isSubActive ? 'font-semibold' : ''}`}
+                                                                onClick={() => navigate(submenu.path)}
+                                                            >
+                                                                {submenu.label}
+                                                            </Button>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        )}
                                     </li>
                                 );
                             })}

@@ -1,3 +1,4 @@
+// src/App.tsx
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import MarketingIntegrations from "./pages/MarketingIntegrations";
 import LeadManagement from "./pages/LeadManagement";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 import { useState } from "react";
 import { Project } from "./pages/Index";
 
@@ -76,20 +78,18 @@ const App = () => {
       notes: "Aguardando definição final dos requisitos pelo cliente.",
       priority: "medium",
       checkpoints: [
-        { id: "1", title: "Levantamento de requisitos", completed: true },
-        { id: "2", title: "Wireframes", completed: false },
-        { id: "3", title: "Desenvolvimento", completed: false },
-        { id: "4", title: "Testes", completed: false }
+        { id: "1", title: "Wireframes", completed: true },
+        { id: "2", title: "Design UI/UX", completed: false },
+        { id: "3", title: "API Backend", completed: false },
+        { id: "4", title: "App Mobile", completed: false },
+        { id: "5", title: "Testes", completed: false }
       ]
     }
   ]);
 
   const handleAddProject = (newProject: Omit<Project, "id">) => {
-    const project: Project = {
-      ...newProject,
-      id: Date.now().toString()
-    };
-    setProjects(prevProjects => [...prevProjects, project]);
+    const id = Date.now().toString();
+    setProjects([...projects, { ...newProject, id }]);
   };
 
   const handleUpdateProject = (updatedProject: Project) => {
@@ -107,10 +107,16 @@ const App = () => {
         <AuthProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/login" element={<Login />} />
+              {/* ===== ROTAS PÚBLICAS ===== */}
+              {/* Login agora é a rota principal */}
+              <Route path="/" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              
+              {/* ===== ROTAS PROTEGIDAS ===== */}
+              {/* Dashboard agora está em /dashboard */}
               <Route 
-                path="/" 
+                path="/dashboard" 
                 element={
                   <ProtectedRoute>
                     <AppLayout projects={projects}>
@@ -119,6 +125,7 @@ const App = () => {
                   </ProtectedRoute>
                 } 
               />
+              
               <Route 
                 path="/projects" 
                 element={
@@ -134,6 +141,7 @@ const App = () => {
                   </ProtectedRoute>
                 } 
               />
+              
               <Route 
                 path="/properties" 
                 element={
@@ -144,6 +152,7 @@ const App = () => {
                   </ProtectedRoute>
                 } 
               />
+              
               <Route 
                 path="/marketing" 
                 element={
@@ -154,6 +163,7 @@ const App = () => {
                   </ProtectedRoute>
                 } 
               />
+              
               <Route 
                 path="/leads" 
                 element={

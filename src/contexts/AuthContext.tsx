@@ -1,112 +1,150 @@
+// src/contexts/AuthContext.tsx
 import React, { createContext, useEffect, useState } from 'react'
-import { User } from '@supabase/supabase-js'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { User, AuthError, Session } from '@supabase/supabase-js'
+import supabase from '@/lib/supabase'
 
 interface AuthContextType {
   user: User | null
+  session: Session | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error?: string }>
-  signUp: (email: string, password: string) => Promise<{ error?: string }>
-  signOut: () => Promise<void>
-  isConfigured: boolean
+  signIn: (email: string, password: string) => Promise<{ user?: User; error?: AuthError }>
+  signUp: (email: string, password: string) => Promise<{ user?: User; error?: AuthError }>
+  signOut: () => Promise<{ error?: AuthError }>
+  resetPassword: (email: string) => Promise<{ error?: AuthError }>
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const configured = isSupabaseConfigured()
 
   useEffect(() => {
-    if (!configured) {
-      console.warn('Supabase not configured. Authentication disabled.')
-      setLoading(false)
-      return
-    }
-
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Error getting session:', error)
+    // Recupera sessão ativa
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Error getting initial session:', error.message)
+        } else {
+          setSession(session)
+          setUser(session?.user ?? null)
+        }
+      } catch (error) {
+        console.error('Unexpected error getting session:', error)
+      } finally {
+        setLoading(false)
       }
-      setUser(session?.user ?? null)
-      setLoading(false)
-    }).catch((error) => {
-      console.error('Error in getSession:', error)
-      setLoading(false)
-    })
+    }
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    getInitialSession()
 
-    return () => subscription.unsubscribe()
-  }, [configured])
+    // Escuta mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth event:', event)
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
 
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  // LOGIN
   const signIn = async (email: string, password: string) => {
-    if (!configured) {
-      // Simulação de login quando Supabase não está configurado
-      console.log('Supabase not configured. Simulating login.')
-      setUser({ email, id: 'demo-user' } as User)
-      return {}
-    }
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
         password,
       })
-      if (error) throw error
-      return {}
+
+      if (error) {
+        return { error }
+      }
+
+      return { user: data.user }
     } catch (error) {
-      return { error: error.message }
+      console.error('Sign in error:', error)
+      return { error: error as AuthError }
     }
   }
 
+  // CADASTRO
   const signUp = async (email: string, password: string) => {
-    if (!configured) {
-      // Simulação de cadastro quando Supabase não está configurado
-      console.log('Supabase not configured. Simulating signup.')
-      setUser({ email, id: 'demo-user' } as User)
-      return {}
-    }
-
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
         password,
       })
-      if (error) throw error
-      return {}
+
+      if (error) {
+        return { error }
+      }
+
+      return { user: data.user }
     } catch (error) {
-      return { error: error.message }
+      console.error('Sign up error:', error)
+      return { error: error as AuthError }
     }
   }
 
+  // LOGOUT
   const signOut = async () => {
-    if (!configured) {
-      setUser(null)
-      return
-    }
-
     try {
-      await supabase.auth.signOut()
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        return { error }
+      }
+
+      // Limpa estado local
+      setUser(null)
+      setSession(null)
+      
+      return {}
     } catch (error) {
-      console.error('Error signing out:', error)
+      console.error('Sign out error:', error)
+      return { error: error as AuthError }
+    }
+  }
+
+  // RESET DE SENHA
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+
+      if (error) {
+        return { error }
+      }
+
+      return {}
+    } catch (error) {
+      console.error('Reset password error:', error)
+      return { error: error as AuthError }
     }
   }
 
   const value = {
     user,
+    session,
     loading,
     signIn,
     signUp,
     signOut,
-    isConfigured: configured,
+    resetPassword,
   }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
