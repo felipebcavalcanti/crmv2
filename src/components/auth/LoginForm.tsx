@@ -8,12 +8,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const loginSchema = z.object({
-  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  email: z
+    .string()
+    .min(1, 'Email é obrigatório')
+    .email('Email inválido')
+    .transform(val => val.toLowerCase().trim()),
+  password: z
+    .string()
+    .min(1, 'Senha é obrigatória')
+    .min(6, 'Senha deve ter pelo menos 6 caracteres'),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
@@ -28,12 +35,15 @@ export const LoginForm = () => {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
+    clearErrors
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   })
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
+    clearErrors()
     
     try {
       const { error } = await signIn(data.email, data.password)
@@ -41,19 +51,39 @@ export const LoginForm = () => {
       if (error) {
         // Tratamento específico de erros do Supabase
         let errorMessage = 'Erro no login'
+        let fieldError: 'email' | 'password' | null = null
         
-        switch (error.message) {
-          case 'Invalid login credentials':
+        switch (error.message.toLowerCase()) {
+          case 'invalid login credentials':
+          case 'invalid credentials':
             errorMessage = 'Email ou senha incorretos'
+            fieldError = 'email'
             break
-          case 'Email not confirmed':
+          case 'email not confirmed':
             errorMessage = 'Confirme seu email antes de fazer login'
+            fieldError = 'email'
             break
-          case 'Too many requests':
+          case 'too many requests':
             errorMessage = 'Muitas tentativas. Tente novamente em alguns minutos'
+            break
+          case 'user not found':
+            errorMessage = 'Usuário não encontrado'
+            fieldError = 'email'
+            break
+          case 'invalid password':
+            errorMessage = 'Senha incorreta'
+            fieldError = 'password'
             break
           default:
             errorMessage = error.message
+        }
+        
+        // Define erro no campo específico se aplicável
+        if (fieldError) {
+          setError(fieldError, { 
+            type: 'manual', 
+            message: errorMessage 
+          })
         }
         
         toast.error('Erro no login', {
@@ -61,7 +91,6 @@ export const LoginForm = () => {
         })
       } else {
         toast.success('Login realizado com sucesso!')
-        // Agora redireciona para /dashboard em vez de /
         navigate('/dashboard', { replace: true })
       }
     } catch (error) {
@@ -80,16 +109,19 @@ export const LoginForm = () => {
         {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="seu@email.com"
-            {...register('email')}
-            className={errors.email ? 'border-red-500' : ''}
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              className={`pl-10 ${errors.email ? 'border-red-500 focus:border-red-500' : ''}`}
+              {...register('email')}
+              disabled={isLoading}
+            />
+          </div>
           {errors.email && (
-            <p className="text-sm text-red-500">{errors.email.message}</p>
+            <p className="text-sm text-red-600">{errors.email.message}</p>
           )}
         </div>
 
@@ -97,36 +129,45 @@ export const LoginForm = () => {
         <div className="space-y-2">
           <Label htmlFor="password">Senha</Label>
           <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Sua senha"
+              placeholder="••••••••"
+              className={`pl-10 pr-10 ${errors.password ? 'border-red-500 focus:border-red-500' : ''}`}
               {...register('password')}
-              className={errors.password ? 'border-red-500 pr-10' : 'pr-10'}
               disabled={isLoading}
             />
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
               onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 h-4 w-4 text-gray-400 hover:text-gray-600"
               disabled={isLoading}
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4 text-gray-400" />
-              ) : (
-                <Eye className="h-4 w-4 text-gray-400" />
-              )}
-            </Button>
+              {showPassword ? <EyeOff /> : <Eye />}
+            </button>
           </div>
           {errors.password && (
-            <p className="text-sm text-red-500">{errors.password.message}</p>
+            <p className="text-sm text-red-600">{errors.password.message}</p>
           )}
         </div>
 
-        {/* Botão de Submit */}
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        {/* Link para recuperar senha */}
+        <div className="text-right">
+          <Link 
+            to="/forgot-password" 
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Esqueceu a senha?
+          </Link>
+        </div>
+
+        {/* Botão de login */}
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={isLoading}
+        >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -138,19 +179,12 @@ export const LoginForm = () => {
         </Button>
       </form>
 
-      {/* Links */}
-      <div className="space-y-2 text-center text-sm">
-        <div>
-          <span className="text-gray-600">Não tem uma conta? </span>
-          <Link to="/register" className="text-blue-600 hover:underline">
-            Cadastre-se
-          </Link>
-        </div>
-        <div>
-          <Link to="/forgot-password" className="text-blue-600 hover:underline">
-            Esqueceu sua senha?
-          </Link>
-        </div>
+      {/* Link para cadastro */}
+      <div className="text-center text-sm">
+        <span className="text-gray-600">Não tem uma conta? </span>
+        <Link to="/register" className="text-blue-600 hover:underline">
+          Cadastre-se
+        </Link>
       </div>
     </div>
   )

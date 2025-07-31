@@ -6,7 +6,7 @@ interface AuthGuardProps {
 }
 
 export const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
-  const { user, loading, isConfigured } = useAuth();
+  const { user, loading,  } = useAuth();
 
   if (loading) {
     return (
@@ -15,12 +15,6 @@ export const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
       </div>
     );
   }
-
-  // Se o Supabase não está configurado, permite acesso
-  if (!isConfigured) {
-    return <>{children}</>;
-  }
-
   // Se não há usuário logado, mostra fallback ou redireciona
   if (!user) {
     return fallback ? <>{fallback}</> : null;
