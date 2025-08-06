@@ -485,3 +485,84 @@ export const updateUserProfile = async (
     }
   }
 }
+/**
+ * Busca todos os perfis de usuário da organização
+ */
+export const getAllProfiles = async (): Promise<DatabaseResponse<UserProfile[]>> => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url');
+
+    if (error) {
+      console.error('Error fetching all profiles:', error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    return { data, error: null, success: true };
+  } catch (error) {
+    console.error('Unexpected error fetching all profiles:', error);
+    return { data: null, error: 'Erro inesperado ao buscar perfis', success: false };
+  }
+};
+// ===== TYPES PARA IMÓVEIS =====
+
+export interface Property {
+  id: string;
+  user_id: string;
+  created_at: string;
+  name: string;
+  location: string;
+  status: 'Disponível' | 'Reservado' | 'Vendido' | 'Indisponível';
+  type: 'Casa' | 'Apartamento' | 'Sobrado' | 'Terreno';
+  purpose: 'Venda' | 'Aluguel';
+  price: number;
+  bedrooms: number;
+  suites: number;
+  bathrooms: number;
+  parking_spots: number;
+  description?: string;
+  images?: any; // JSONB para imagens
+}
+
+// ===== OPERAÇÕES DE IMÓVEIS =====
+
+/**
+ * Busca todos os imóveis do usuário autenticado
+ */
+export const getProperties = async (): Promise<DatabaseResponse<Property[]>> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+  const { data, error } = await supabase
+    .from('properties')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Erro ao buscar imóveis:', error);
+    return { data: null, error: error.message, success: false };
+  }
+  return { data, error: null, success: true };
+};
+
+/**
+ * Cria um novo imóvel
+ */
+export const createProperty = async (propertyData: Omit<Property, 'id' | 'user_id' | 'created_at'>): Promise<DatabaseResponse<Property>> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+  const { data, error } = await supabase
+    .from('properties')
+    .insert({ ...propertyData, user_id: user.id })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao criar imóvel:', error);
+    return { data: null, error: error.message, success: false };
+  }
+  return { data, error: null, success: true };
+};

@@ -1,3 +1,4 @@
+// src/components/ProjectCard.tsx
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,8 @@ import { ptBR } from "date-fns/locale";
 import { Project } from "@/pages/Index";
 import { EditProjectModal } from "@/components/EditProjectModal";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
-import { MoreHorizontal, Calendar, Users, Eye, Edit, Trash2, AlertCircle } from "lucide-react";
+import { MoreHorizontal, Calendar, Users, Eye, Edit, Trash2, AlertCircle, User } from "lucide-react";
+import { useProfiles } from "@/hooks/useProfiles"; // Importar hook de perfis
 
 interface ProjectCardProps {
   project: Project;
@@ -21,6 +23,10 @@ interface ProjectCardProps {
 export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const { profiles } = useProfiles(); // Buscar perfis para encontrar o nome do responsável
+
+  // Encontra o perfil do responsável
+  const responsible = profiles.find(p => p.id === project.responsible_id);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -59,7 +65,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   const isOverdue = new Date(project.deliveryDate) < new Date() && project.status !== "completed";
   const isHighPriority = project.priority === "high";
 
-  // Lógica para determinar qual badge mostrar (prioridade: CRÍTICO > ATRASADO > ALTA PRIORIDADE)
   const getAlertBadge = () => {
     if (isHighPriority && isOverdue) {
       return (
@@ -100,7 +105,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   return (
     <>
       <Card className={cardClasses}>
-        {/* Alert Badge - Apenas uma badge por vez */}
         <div className="absolute top-2 right-2 z-10">
           {getAlertBadge()}
         </div>
@@ -158,7 +162,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
         </CardHeader>
 
         <CardContent className="space-y-4 relative z-10">
-          {/* Progress */}
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-600">Progresso</span>
@@ -167,30 +170,20 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
             <Progress value={project.progress} className="h-2" />
           </div>
 
-          {/* Delivery Date */}
           <div className="flex items-center text-sm text-gray-600">
             <Calendar className="w-4 h-4 mr-2" />
             <span>Entrega: {format(new Date(project.deliveryDate), "dd/MM/yyyy", { locale: ptBR })}</span>
           </div>
+          
+          {/* Exibição do Responsável */}
+          <div className="flex items-center text-sm text-gray-600">
+            <User className="w-4 h-4 mr-2" />
+            <span>Responsável: {responsible ? responsible.full_name : 'N/D'}</span>
+          </div>
 
-          {/* Allocations */}
           <div className="flex items-center text-sm text-gray-600">
             <Users className="w-4 h-4 mr-2" />
             <span>{project.allocations.length} pessoa(s) alocada(s)</span>
-          </div>
-
-          {/* Allocations List */}
-          <div className="flex flex-wrap gap-1">
-            {project.allocations.slice(0, 3).map((person, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {person}
-              </Badge>
-            ))}
-            {project.allocations.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{project.allocations.length - 3}
-              </Badge>
-            )}
           </div>
 
           <Button

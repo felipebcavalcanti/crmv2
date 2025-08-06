@@ -1,4 +1,5 @@
-import { useState } from "react";
+// src/components/AddProjectModal.tsx
+import React, { useState } from "react";
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +13,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Project } from "@/pages/Index";
+import { useProfiles } from "@/hooks/useProfiles"; // Importar o novo hook
 
 interface AddProjectModalProps {
-  onAddProject: (project: Omit<Project, "id">) => void;
+  onAddProject: (project: Omit<Project, "id" | "progress" | "weeklyTracking">) => void;
   onClose: () => void;
 }
 
@@ -30,6 +32,8 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
   
   const [allocations, setAllocations] = useState<string[]>([]);
   const [newAllocation, setNewAllocation] = useState("");
+  const { profiles, loading: profilesLoading } = useProfiles();
+  const [responsibleId, setResponsibleId] = useState<string | undefined>();
 
   const handleAddAllocation = () => {
     if (newAllocation.trim() && !allocations.includes(newAllocation.trim())) {
@@ -50,33 +54,15 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
       return;
     }
 
-    const newProject: Omit<Project, "id"> = {
-      name: formData.name,
-      description: formData.description,
-      allocations,
+    const newProject: Omit<Project, "id" | "progress" | "weeklyTracking"> = {
+      ...formData,
       deliveryDate: formData.deliveryDate,
-      status: formData.status,
-      progress: 0,
-      weeklyTracking: [],
+      allocations,
       notes: formData.notes,
-      priority: formData.priority
+      responsible_id: responsibleId,
     };
 
-    console.log("Criando novo projeto:", newProject);
     onAddProject(newProject);
-    
-    // Reset form
-    setFormData({
-      name: "",
-      description: "",
-      deliveryDate: undefined,
-      status: "planning",
-      priority: "medium",
-      notes: ""
-    });
-    setAllocations([]);
-    setNewAllocation("");
-    
     onClose();
   };
 
@@ -112,6 +98,27 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
             placeholder="Descreva o projeto"
             rows={3}
           />
+        </div>
+
+        {/* Responsável pelo Projeto */}
+        <div>
+          <Label>Responsável pelo Projeto</Label>
+          <Select
+            onValueChange={setResponsibleId}
+            defaultValue={responsibleId}
+            disabled={profilesLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={profilesLoading ? "Carregando..." : "Selecione um responsável"} />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              {profiles.map((profile) => (
+                <SelectItem key={profile.id} value={profile.id}>
+                  {profile.full_name || profile.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Status e Prioridade */}
@@ -178,7 +185,6 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
                 selected={formData.deliveryDate}
                 onSelect={(date) => setFormData({ ...formData, deliveryDate: date })}
                 initialFocus
-                className="pointer-events-auto"
               />
             </PopoverContent>
           </Popover>

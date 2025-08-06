@@ -14,171 +14,93 @@ import LeadManagement from "./pages/LeadManagement";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
-import { useState } from "react";
-import { Project } from "./pages/Index";
+import { useProjects } from "./hooks/useProjects";
 
 const queryClient = new QueryClient();
 
+// Componente Wrapper para fornecer dados de projetos ao AppLayout
+const AppWrapper = () => {
+  const { projects } = useProjects(); // Hook é chamado aqui
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* ===== ROTAS PÚBLICAS ===== */}
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        
+        {/* ===== ROTAS PROTEGIDAS ===== */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              {/* AppLayout recebe os projetos para o sidebar */}
+              <AppLayout projects={projects}>
+                <Index />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/projects" 
+          element={
+            <ProtectedRoute>
+              <AppLayout projects={projects}>
+                <Projects />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/properties" 
+          element={
+            <ProtectedRoute>
+              <AppLayout projects={projects}>
+                <PropertyManagement />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/marketing" 
+          element={
+            <ProtectedRoute>
+              <AppLayout projects={projects}>
+                <MarketingIntegrations />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/leads" 
+          element={
+            <ProtectedRoute>
+              <AppLayout projects={projects}>
+                <LeadManagement />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
 const App = () => {
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: "1",
-      name: "Sistema de E-commerce",
-      description: "Desenvolvimento de plataforma completa de e-commerce com pagamento integrado",
-      allocations: ["João Silva", "Maria Santos", "Pedro Costa"],
-      deliveryDate: new Date("2024-08-15"),
-      status: "in-progress",
-      progress: 65,
-      weeklyTracking: [
-        {
-          week: "Semana 1",
-          progress: 25,
-          notes: "Setup inicial e configuração do ambiente",
-          blockers: []
-        },
-        {
-          week: "Semana 2",
-          progress: 45,
-          notes: "Desenvolvimento da API de produtos",
-          blockers: ["Aguardando aprovação do design"]
-        },
-        {
-          week: "Semana 3",
-          progress: 65,
-          notes: "Implementação do carrinho de compras",
-          blockers: []
-        }
-      ],
-      notes: "Projeto prioritário para Q3. Cliente demonstrou alta satisfação com o progresso atual.",
-      priority: "high",
-      checkpoints: [
-        { id: "1", title: "Setup inicial", completed: true },
-        { id: "2", title: "API de produtos", completed: true },
-        { id: "3", title: "Carrinho de compras", completed: true },
-        { id: "4", title: "Sistema de pagamento", completed: false },
-        { id: "5", title: "Testes finais", completed: false }
-      ]
-    },
-    {
-      id: "2",
-      name: "App Mobile Delivery",
-      description: "Aplicativo móvel para delivery de comida com rastreamento em tempo real",
-      allocations: ["Ana Oliveira", "Carlos Mendes"],
-      deliveryDate: new Date("2024-09-30"),
-      status: "planning",
-      progress: 15,
-      weeklyTracking: [
-        {
-          week: "Semana 1",
-          progress: 15,
-          notes: "Levantamento de requisitos e wireframes",
-          blockers: ["Definição final do escopo"]
-        }
-      ],
-      notes: "Aguardando definição final dos requisitos pelo cliente.",
-      priority: "medium",
-      checkpoints: [
-        { id: "1", title: "Wireframes", completed: true },
-        { id: "2", title: "Design UI/UX", completed: false },
-        { id: "3", title: "API Backend", completed: false },
-        { id: "4", title: "App Mobile", completed: false },
-        { id: "5", title: "Testes", completed: false }
-      ]
-    }
-  ]);
-
-  const handleAddProject = (newProject: Omit<Project, "id">) => {
-    const id = Date.now().toString();
-    setProjects([...projects, { ...newProject, id }]);
-  };
-
-  const handleUpdateProject = (updatedProject: Project) => {
-    setProjects(projects.map(p => p.id === updatedProject.id ? updatedProject : p));
-  };
-
-  const handleDeleteProject = (projectId: string) => {
-    setProjects(projects.filter(p => p.id !== projectId));
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* ===== ROTAS PÚBLICAS ===== */}
-              {/* Login agora é a rota principal */}
-              <Route path="/" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              
-              {/* ===== ROTAS PROTEGIDAS ===== */}
-              {/* Dashboard agora está em /dashboard */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <AppLayout projects={projects}>
-                      <Index projects={projects} />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              <Route 
-                path="/projects" 
-                element={
-                  <ProtectedRoute>
-                    <AppLayout projects={projects}>
-                      <Projects 
-                        projects={projects}
-                        onAddProject={handleAddProject}
-                        onUpdateProject={handleUpdateProject}
-                        onDeleteProject={handleDeleteProject}
-                      />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              <Route 
-                path="/properties" 
-                element={
-                  <ProtectedRoute>
-                    <AppLayout projects={projects}>
-                      <PropertyManagement />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              <Route 
-                path="/marketing" 
-                element={
-                  <ProtectedRoute>
-                    <AppLayout projects={projects}>
-                      <MarketingIntegrations />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              <Route 
-                path="/leads" 
-                element={
-                  <ProtectedRoute>
-                    <AppLayout projects={projects}>
-                      <LeadManagement />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
-          </BrowserRouter>
+          <AppWrapper />
         </AuthProvider>
       </TooltipProvider>
-    </QueryClientProvider>
+    </QueryClientProvider> // CORREÇÃO APLICADA AQUI
   );
 };
 
