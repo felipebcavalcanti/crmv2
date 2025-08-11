@@ -14,9 +14,10 @@ import { Lead } from "@/lib/database";
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import { DragDropContext, Droppable, Draggable, OnDragEndResponder } from "@hello-pangea/dnd";
+import { LeadDetailsModal } from "@/components/LeadDetailsModal"; // Importar o novo modal
 
 // Componente para o Card de Lead no Kanban
-const LeadCard = ({ lead, index }: { lead: Lead; index: number }) => {
+const LeadCard = ({ lead, index, onClick }: { lead: Lead; index: number; onClick: () => void }) => {
   const updatedAt = lead.updated_at ? parseISO(lead.updated_at) : new Date(lead.created_at);
   const daysSinceUpdate = differenceInDays(new Date(), updatedAt);
   const isStagnant = daysSinceUpdate > 7;
@@ -36,30 +37,21 @@ const LeadCard = ({ lead, index }: { lead: Lead; index: number }) => {
   return (
     <Draggable draggableId={lead.id} index={index}>
       {(provided) => (
-        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} onClick={onClick}>
             <Card className="mb-3 bg-white hover:shadow-lg transition-shadow border-l-4 border-transparent data-[temperature=QUENTE]:border-red-500 data-[temperature=MORNO]:border-yellow-500 data-[temperature=FRIO]:border-blue-500" data-temperature={lead.temperature}>
               <CardContent className="p-3">
                 <p className="font-bold text-sm text-gray-900 mb-2">{lead.name}</p>
-                
                 <div className="space-y-1.5 text-xs text-gray-600">
-                    <div className="flex items-center">
-                        <TemperatureIcon temp={lead.temperature} />
-                        <span className="ml-1.5 font-semibold">{lead.temperature}</span>
-                    </div>
+                    <div className="flex items-center"><TemperatureIcon temp={lead.temperature} /><span className="ml-1.5 font-semibold">{lead.temperature}</span></div>
                     {lead.phone && (
                         <div className="flex items-center">
                             <Phone className="w-4 h-4 mr-1.5 text-gray-400" />
                             <span>{lead.phone}</span>
                         </div>
                     )}
-                    {lead.purpose && (
-                        <div className="flex items-center">
-                            <Home className="w-4 h-4 mr-1.5 text-gray-400" />
-                            <span>{lead.purpose} | {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lead.desired_value || 0)}</span>
-                        </div>
-                    )}
+                    {lead.purpose && <div className="flex items-center"><Home className="w-4 h-4 mr-1.5 text-gray-400" /><span>{lead.purpose} | {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lead.desired_value || 0)}</span></div>}
                 </div>
-                
+                {lead.next_task && <div className={`mt-3 pt-2 border-t text-xs ${isTaskOverdue ? 'text-red-600 font-bold' : 'text-gray-700'}`}><p className="flex items-center"><CalendarIcon className="w-4 h-4 mr-1.5" />{lead.next_task.title}</p>{nextTaskDueDate && <p className="ml-5 text-gray-500 font-normal">{format(nextTaskDueDate, "dd/MM/yyyy")}</p>}</div>}
                 {isStagnant && <div className="flex items-center text-xs text-yellow-600 font-semibold mt-2 pt-2 border-t"><AlertCircle className="w-3 h-3 mr-1.5" />Atenção: Estagnado há {daysSinceUpdate} dias</div>}
               </CardContent>
             </Card>
@@ -71,13 +63,25 @@ const LeadCard = ({ lead, index }: { lead: Lead; index: number }) => {
 
 const LeadManagement = () => {
   const { stages, leads, loading, error, addLead, updateLeadStage } = useLeads();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOriginDetails, setShowOriginDetails] = useState(false);
   
   const initialFormState = { name: '', email: '', phone: '', temperature: 'MORNO' as Lead['temperature'], purpose: 'Venda' as Lead['purpose'], desired_value: 0, origin: 'Redes Sociais' as Lead['origin'], origin_details: '', notes: '', next_task: null };
   const [newLeadData, setNewLeadData] = useState<Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'stage_id'>>(initialFormState);
   const [formattedPrice, setFormattedPrice] = useState("");
+
+  const handleOpenDetails = (lead: Lead) => {
+    setSelectedLead(lead);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedLead(null);
+  };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/\D/g, '');
@@ -93,12 +97,12 @@ const LeadManagement = () => {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '');
-    value = value.substring(0, 11); // Limita a 11 dígitos (DDD + 9 dígitos)
+    value = value.substring(0, 11);
     
     if (value.length > 2) {
       value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
     }
-    if (value.length > 9) {
+    if (value.length > 10) {
         value = `${value.substring(0, 10)}-${value.substring(10)}`;
     }
     
@@ -115,7 +119,7 @@ const LeadManagement = () => {
         await addLead(newLeadData);
         setNewLeadData(initialFormState);
         setFormattedPrice("");
-        setIsModalOpen(false);
+        setIsAddModalOpen(false);
     } catch(e) {
         console.error("Falha ao adicionar lead:", e);
     } finally {
@@ -153,7 +157,7 @@ const LeadManagement = () => {
                         <h1 className="text-3xl font-bold text-gray-900">Leads (CRM)</h1>
                         <p className="text-gray-600 mt-1">Gerencie seu funil de vendas de forma visual e proativa.</p>
                     </div>
-                    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                    <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
                         <DialogTrigger asChild><Button className="bg-blue-600 hover:bg-blue-700"><Plus className="w-4 h-4 mr-2" />Adicionar Lead</Button></DialogTrigger>
                         <DialogContent className="sm:max-w-[525px] bg-white"><DialogHeader><DialogTitle>Adicionar Novo Lead</DialogTitle><DialogDescription>Preencha as informações para iniciar o contato.</DialogDescription></DialogHeader>
                             <div className="grid gap-4 py-4">
@@ -166,7 +170,7 @@ const LeadManagement = () => {
                                 {showOriginDetails && <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="origin_details" className="text-right">Indicado por</Label><Input id="origin_details" value={newLeadData.origin_details ?? ''} onChange={(e) => setNewLeadData({...newLeadData, origin_details: e.target.value})} className="col-span-3" placeholder="Nome de quem indicou"/></div>}
                                 <div className="grid grid-cols-4 items-start gap-4"><Label htmlFor="notes" className="text-right pt-2">Anotações</Label><Textarea id="notes" value={newLeadData.notes ?? ''} onChange={(e) => setNewLeadData({...newLeadData, notes: e.target.value})} className="col-span-3" placeholder="Detalhes importantes sobre o lead..."/></div>
                             </div>
-                            <DialogFooter><Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button><Button onClick={handleAddLead} className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isSubmitting ? "Salvando..." : "Salvar Lead"}</Button></DialogFooter>
+                            <DialogFooter><Button variant="secondary" onClick={() => setIsAddModalOpen(false)}>Cancelar</Button><Button onClick={handleAddLead} className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isSubmitting ? "Salvando..." : "Salvar Lead"}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -176,9 +180,9 @@ const LeadManagement = () => {
                         <Droppable droppableId={stage.id} key={stage.id}>
                             {(provided) => (
                                 <div ref={provided.innerRef} {...provided.droppableProps} className="bg-gray-100 rounded-lg shadow-sm flex flex-col h-[calc(100vh-18rem)]">
-                                    <div className="p-3 border-b bg-white rounded-t-lg"><h3 className="font-semibold text-gray-800">{stage.name} <span className="text-sm font-normal text-gray-500">{leadsByStage[stage.id]?.length || 0}</span></h3></div>
+                                    <div className="p-3 border-b bg-white rounded-t-lg sticky top-0 z-10"><h3 className="font-semibold text-gray-800">{stage.name} <span className="text-sm font-normal text-gray-500">{leadsByStage[stage.id]?.length || 0}</span></h3></div>
                                     <div className="p-2 flex-1 overflow-y-auto">
-                                        {(leadsByStage[stage.id] || []).map((lead, index) => <LeadCard key={lead.id} lead={lead} index={index} />)}
+                                        {(leadsByStage[stage.id] || []).map((lead, index) => <LeadCard key={lead.id} lead={lead} index={index} onClick={() => handleOpenDetails(lead)} />)}
                                         {provided.placeholder}
                                         {(leadsByStage[stage.id] || []).length === 0 && (
                                             <div className="text-center pt-10 text-xs text-gray-500">Nenhum lead nesta etapa.</div>
@@ -190,6 +194,10 @@ const LeadManagement = () => {
                     ))}
                 </div>
             </div>
+            
+            <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+                <LeadDetailsModal lead={selectedLead} onClose={handleCloseDetails} />
+            </Dialog>
         </div>
     </DragDropContext>
   );
