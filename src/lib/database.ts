@@ -30,8 +30,7 @@ export interface DatabaseProject {
   background_image?: string
   user_id: string
   created_at: string
-  updated_at: string | null;
-  responsible_id?: string | null;
+  updated_at: string
 }
 
 export interface DatabaseResponse<T> {
@@ -73,21 +72,18 @@ export const getProjects = async (): Promise<DatabaseResponse<Project[]>> => {
     }
 
     // Converte os dados do banco para o formato da aplicação
-    const projects: Project[] = data.map(dbProject => ({
-        ...dbProject,
-        deliveryDate: new Date(dbProject.delivery_date)
-    }));
+    const projects: Project[] = data.map(convertDatabaseToProject)
 
     return {
       data: projects,
       error: null,
       success: true
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Unexpected error fetching projects:', error)
     return {
       data: null,
-      error: error.message || 'Erro inesperado ao buscar projetos',
+      error: 'Erro inesperado ao buscar projetos',
       success: false
     }
   }
@@ -131,19 +127,19 @@ export const getProject = async (projectId: string): Promise<DatabaseResponse<Pr
         success: false
       }
     }
-    
-    const project = { ...data, deliveryDate: new Date(data.delivery_date) };
+
+    const project = convertDatabaseToProject(data)
 
     return {
       data: project,
       error: null,
       success: true
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Unexpected error fetching project:', error)
     return {
       data: null,
-      error: error.message || 'Erro inesperado ao buscar projeto',
+      error: 'Erro inesperado ao buscar projeto',
       success: false
     }
   }
@@ -165,13 +161,9 @@ export const createProject = async (
         success: false
       }
     }
-    
-    const databaseData = {
-        ...projectData,
-        user_id: user.id,
-        delivery_date: projectData.deliveryDate.toISOString()
-    };
-    delete (databaseData as any).deliveryDate;
+
+    // Converte os dados da aplicação para o formato do banco
+    const databaseData = convertProjectToDatabase(projectData, user.id)
 
     const { data, error } = await supabase
       .from('projects')
@@ -181,21 +173,25 @@ export const createProject = async (
 
     if (error) {
       console.error('Error creating project:', error)
-      return { data: null, error: error.message, success: false }
+      return {
+        data: null,
+        error: error.message,
+        success: false
+      }
     }
 
-    const project = { ...data, deliveryDate: new Date(data.delivery_date) };
+    const project = convertDatabaseToProject(data)
 
     return {
       data: project,
       error: null,
       success: true
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Unexpected error creating project:', error)
     return {
       data: null,
-      error: error.message || 'Erro inesperado ao criar projeto',
+      error: 'Erro inesperado ao criar projeto',
       success: false
     }
   }
@@ -219,11 +215,9 @@ export const updateProject = async (
       }
     }
 
-    const databaseUpdates: any = { ...updates };
-    if (updates.deliveryDate) {
-        databaseUpdates.delivery_date = updates.deliveryDate.toISOString();
-        delete databaseUpdates.deliveryDate;
-    }
+    // Converte os dados da aplicação para o formato do banco
+    const databaseUpdates = convertProjectUpdatesToDatabase(updates)
+    databaseUpdates.updated_at = new Date().toISOString()
 
     const { data, error } = await supabase
       .from('projects')
@@ -235,25 +229,33 @@ export const updateProject = async (
 
     if (error) {
       console.error('Error updating project:', error)
-      return { data: null, error: error.message, success: false }
+      return {
+        data: null,
+        error: error.message,
+        success: false
+      }
     }
 
     if (!data) {
-      return { data: null, error: 'Projeto não encontrado ou sem permissão', success: false }
+      return {
+        data: null,
+        error: 'Projeto não encontrado ou sem permissão',
+        success: false
+      }
     }
 
-    const project = { ...data, deliveryDate: new Date(data.delivery_date) };
+    const project = convertDatabaseToProject(data)
 
     return {
       data: project,
       error: null,
       success: true
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Unexpected error updating project:', error)
     return {
       data: null,
-      error: error.message || 'Erro inesperado ao atualizar projeto',
+      error: 'Erro inesperado ao atualizar projeto',
       success: false
     }
   }
@@ -267,7 +269,11 @@ export const deleteProject = async (projectId: string): Promise<DatabaseResponse
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return { data: null, error: 'Usuário não autenticado', success: false }
+      return {
+        data: null,
+        error: 'Usuário não autenticado',
+        success: false
+      }
     }
 
     const { error } = await supabase
@@ -278,7 +284,11 @@ export const deleteProject = async (projectId: string): Promise<DatabaseResponse
 
     if (error) {
       console.error('Error deleting project:', error)
-      return { data: null, error: error.message, success: false }
+      return {
+        data: null,
+        error: error.message,
+        success: false
+      }
     }
 
     return {
@@ -286,10 +296,85 @@ export const deleteProject = async (projectId: string): Promise<DatabaseResponse
       error: null,
       success: true
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Unexpected error deleting project:', error)
-    return { data: null, error: error.message || 'Erro inesperado ao deletar projeto', success: false }
+    return {
+      data: null,
+      error: 'Erro inesperado ao deletar projeto',
+      success: false
+    }
   }
+}
+
+// ===== FUNÇÕES DE CONVERSÃO =====
+
+/**
+ * Converte dados do banco para o formato da aplicação
+ */
+function convertDatabaseToProject(dbProject: DatabaseProject): Project {
+  return {
+    id: dbProject.id,
+    name: dbProject.name,
+    description: dbProject.description,
+    allocations: dbProject.allocations || [],
+    deliveryDate: new Date(dbProject.delivery_date),
+    status: dbProject.status,
+    progress: dbProject.progress,
+    weeklyTracking: dbProject.weekly_tracking || [],
+    notes: dbProject.notes,
+    priority: dbProject.priority,
+    checkpoints: dbProject.checkpoints || [],
+    images: dbProject.images || [],
+    backgroundImage: dbProject.background_image,
+  }
+}
+
+/**
+ * Converte dados da aplicação para o formato do banco
+ */
+function convertProjectToDatabase(
+  project: Omit<Project, 'id'>, 
+  userId: string
+): Omit<DatabaseProject, 'id' | 'created_at' | 'updated_at'> {
+  return {
+    name: project.name,
+    description: project.description || '',
+    allocations: project.allocations || [],
+    delivery_date: project.deliveryDate.toISOString(),
+    status: project.status,
+    progress: project.progress || 0,
+    weekly_tracking: project.weeklyTracking || [],
+    notes: project.notes || '',
+    priority: project.priority,
+    checkpoints: project.checkpoints || [],
+    images: project.images || [],
+    background_image: project.backgroundImage || null,
+    user_id: userId,
+  }
+}
+
+/**
+ * Converte atualizações da aplicação para o formato do banco
+ */
+function convertProjectUpdatesToDatabase(
+  updates: Partial<Omit<Project, 'id'>>
+): Partial<Omit<DatabaseProject, 'id' | 'user_id' | 'created_at'>> {
+  const databaseUpdates: Partial<Omit<DatabaseProject, 'id' | 'user_id' | 'created_at'>> = {}
+
+  if (updates.name !== undefined) databaseUpdates.name = updates.name
+  if (updates.description !== undefined) databaseUpdates.description = updates.description
+  if (updates.allocations !== undefined) databaseUpdates.allocations = updates.allocations
+  if (updates.deliveryDate !== undefined) databaseUpdates.delivery_date = updates.deliveryDate.toISOString()
+  if (updates.status !== undefined) databaseUpdates.status = updates.status
+  if (updates.progress !== undefined) databaseUpdates.progress = updates.progress
+  if (updates.weeklyTracking !== undefined) databaseUpdates.weekly_tracking = updates.weeklyTracking
+  if (updates.notes !== undefined) databaseUpdates.notes = updates.notes
+  if (updates.priority !== undefined) databaseUpdates.priority = updates.priority
+  if (updates.checkpoints !== undefined) databaseUpdates.checkpoints = updates.checkpoints
+  if (updates.images !== undefined) databaseUpdates.images = updates.images
+  if (updates.backgroundImage !== undefined) databaseUpdates.background_image = updates.backgroundImage
+
+  return databaseUpdates
 }
 
 // ===== OPERAÇÕES DE PERFIL DO USUÁRIO =====
@@ -325,7 +410,7 @@ export const getUserProfile = async (): Promise<DatabaseResponse<UserProfile>> =
     return { data: data, error: null, success: true }
   } catch (error: any) {
     console.error('Unexpected error fetching user profile:', error)
-    return { data: null, error: error.message || 'Erro inesperado ao buscar perfil', success: false }
+    return { data: null, error: 'Erro inesperado ao buscar perfil', success: false }
   }
 }
 
@@ -359,7 +444,7 @@ export const updateUserProfile = async (
     return { data: data, error: null, success: true }
   } catch (error: any) {
     console.error('Unexpected error updating user profile:', error)
-    return { data: null, error: error.message || 'Erro inesperado ao atualizar perfil', success: false }
+    return { data: null, error: 'Erro inesperado ao atualizar perfil', success: false }
   }
 }
 
@@ -470,7 +555,9 @@ export const createDefaultKanbanStages = async (): Promise<DatabaseResponse<Kanb
         { user_id: user.id, name: 'Captura', position: 0 },
         { user_id: user.id, name: 'Qualificação', position: 1 },
         { user_id: user.id, name: 'Visita Agendada', position: 2 },
-        { user_id: user.id, name: 'Negociação', position: 3 }
+        { user_id: user.id, name: 'Negociação', position: 3 },
+        { user_id: user.id, name: 'Ganhos', position: 4 },
+        { user_id: user.id, name: 'Perdidos', position: 5 }
     ];
 
     const { data, error } = await supabase.from('kanban_stages').insert(defaultStages).select();
@@ -482,7 +569,7 @@ export const createDefaultKanbanStages = async (): Promise<DatabaseResponse<Kanb
     return { data, error: null, success: true };
 };
 
-// ===== TYPES E OPERAÇÕES DE LEADS (ESTRUTURA INTELIGENTE) =====
+// ===== TYPES E OPERAÇÕES DE LEADS =====
 
 export interface Lead {
   id: string;

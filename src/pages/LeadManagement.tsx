@@ -8,13 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Filter, Plus, Phone, Mail, AlertCircle, Calendar as CalendarIcon, Loader2, Home, Flame, ThermometerSun, ThermometerSnowflake } from "lucide-react";
+import { Users, Filter, Plus, Phone, Mail, AlertCircle, Calendar as CalendarIcon, Loader2, Home, Flame, ThermometerSun, ThermometerSnowflake, Search } from "lucide-react";
 import { useLeads } from "@/hooks/useLeads";
 import { Lead } from "@/lib/database";
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import { DragDropContext, Droppable, Draggable, OnDragEndResponder } from "@hello-pangea/dnd";
-import { LeadDetailsModal } from "@/components/LeadDetailsModal"; // Importar o novo modal
+import { LeadDetailsModal } from "@/components/LeadDetailsModal";
 
 // Componente para o Card de Lead no Kanban
 const LeadCard = ({ lead, index, onClick }: { lead: Lead; index: number; onClick: () => void }) => {
@@ -51,7 +51,6 @@ const LeadCard = ({ lead, index, onClick }: { lead: Lead; index: number; onClick
                     )}
                     {lead.purpose && <div className="flex items-center"><Home className="w-4 h-4 mr-1.5 text-gray-400" /><span>{lead.purpose} | {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lead.desired_value || 0)}</span></div>}
                 </div>
-                {lead.next_task && <div className={`mt-3 pt-2 border-t text-xs ${isTaskOverdue ? 'text-red-600 font-bold' : 'text-gray-700'}`}><p className="flex items-center"><CalendarIcon className="w-4 h-4 mr-1.5" />{lead.next_task.title}</p>{nextTaskDueDate && <p className="ml-5 text-gray-500 font-normal">{format(nextTaskDueDate, "dd/MM/yyyy")}</p>}</div>}
                 {isStagnant && <div className="flex items-center text-xs text-yellow-600 font-semibold mt-2 pt-2 border-t"><AlertCircle className="w-3 h-3 mr-1.5" />Atenção: Estagnado há {daysSinceUpdate} dias</div>}
               </CardContent>
             </Card>
@@ -68,6 +67,7 @@ const LeadManagement = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOriginDetails, setShowOriginDetails] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   const initialFormState = { name: '', email: '', phone: '', temperature: 'MORNO' as Lead['temperature'], purpose: 'Venda' as Lead['purpose'], desired_value: 0, origin: 'Redes Sociais' as Lead['origin'], origin_details: '', notes: '', next_task: null };
   const [newLeadData, setNewLeadData] = useState<Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'stage_id'>>(initialFormState);
@@ -135,15 +135,26 @@ const LeadManagement = () => {
     updateLeadStage(draggableId, destination.droppableId);
   };
   
+  const filteredLeads = useMemo(() => {
+    if (!searchQuery) {
+        return leads;
+    }
+    return leads.filter(lead => 
+        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.phone?.includes(searchQuery)
+    );
+  }, [leads, searchQuery]);
+
   const leadsByStage = useMemo(() => {
     const grouped: { [key: string]: Lead[] } = {};
-    if (stages && leads) {
+    if (stages && filteredLeads) {
         stages.forEach(stage => {
-          grouped[stage.id] = leads.filter(lead => lead.stage_id === stage.id);
+          grouped[stage.id] = filteredLeads.filter(lead => lead.stage_id === stage.id);
         });
     }
     return grouped;
-  }, [leads, stages]);
+  }, [filteredLeads, stages]);
 
   if (loading) return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>;
   if (error) return <div className="flex h-screen w-full items-center justify-center text-red-600"><p>Erro ao carregar os dados de leads: {error}</p></div>;
@@ -157,22 +168,34 @@ const LeadManagement = () => {
                         <h1 className="text-3xl font-bold text-gray-900">Leads (CRM)</h1>
                         <p className="text-gray-600 mt-1">Gerencie seu funil de vendas de forma visual e proativa.</p>
                     </div>
-                    <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-                        <DialogTrigger asChild><Button className="bg-blue-600 hover:bg-blue-700"><Plus className="w-4 h-4 mr-2" />Adicionar Lead</Button></DialogTrigger>
-                        <DialogContent className="sm:max-w-[525px] bg-white"><DialogHeader><DialogTitle>Adicionar Novo Lead</DialogTitle><DialogDescription>Preencha as informações para iniciar o contato.</DialogDescription></DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nome *</Label><Input id="name" value={newLeadData.name} onChange={(e) => setNewLeadData({...newLeadData, name: e.target.value})} className="col-span-3" placeholder="Nome completo do lead"/></div>
-                                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="phone" className="text-right">Telefone</Label><Input id="phone" value={newLeadData.phone ?? ''} onChange={handlePhoneChange} className="col-span-3" placeholder="(31) 99999-9999"/></div>
-                                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="email" className="text-right">Email</Label><Input id="email" type="email" value={newLeadData.email ?? ''} onChange={(e) => setNewLeadData({...newLeadData, email: e.target.value})} className="col-span-3" placeholder="email@exemplo.com"/></div>
-                                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="purpose" className="text-right">Finalidade</Label><Select value={newLeadData.purpose ?? undefined} onValueChange={(value: Lead['purpose']) => setNewLeadData({...newLeadData, purpose: value})}><SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Venda">Venda</SelectItem><SelectItem value="Aluguel">Aluguel</SelectItem></SelectContent></Select></div>
-                                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="desired_value" className="text-right">Orçamento</Label><Input id="desired_value" value={formattedPrice} onChange={handlePriceChange} className="col-span-3" placeholder="R$ 0,00"/></div>
-                                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="origin" className="text-right">Canal</Label><Select value={newLeadData.origin ?? undefined} onValueChange={(value: string) => {setShowOriginDetails(value === 'Indicação'); setNewLeadData({...newLeadData, origin: value})}}><SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Redes Sociais">Redes Sociais</SelectItem><SelectItem value="Indicação">Indicação</SelectItem><SelectItem value="Portal Imobiliário">Portal Imobiliário</SelectItem><SelectItem value="Outro">Outro</SelectItem></SelectContent></Select></div>
-                                {showOriginDetails && <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="origin_details" className="text-right">Indicado por</Label><Input id="origin_details" value={newLeadData.origin_details ?? ''} onChange={(e) => setNewLeadData({...newLeadData, origin_details: e.target.value})} className="col-span-3" placeholder="Nome de quem indicou"/></div>}
-                                <div className="grid grid-cols-4 items-start gap-4"><Label htmlFor="notes" className="text-right pt-2">Anotações</Label><Textarea id="notes" value={newLeadData.notes ?? ''} onChange={(e) => setNewLeadData({...newLeadData, notes: e.target.value})} className="col-span-3" placeholder="Detalhes importantes sobre o lead..."/></div>
-                            </div>
-                            <DialogFooter><Button variant="secondary" onClick={() => setIsAddModalOpen(false)}>Cancelar</Button><Button onClick={handleAddLead} className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isSubmitting ? "Salvando..." : "Salvar Lead"}</Button></DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <div className="flex gap-2">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input 
+                                placeholder="Pesquisar lead..."
+                                className="pl-10"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+                            <DialogTrigger asChild><Button className="bg-blue-600 hover:bg-blue-700"><Plus className="w-4 h-4 mr-2" />Adicionar Lead</Button></DialogTrigger>
+                            <DialogContent className="sm:max-w-[525px] bg-white"><DialogHeader><DialogTitle>Adicionar Novo Lead</DialogTitle><DialogDescription>Preencha as informações para iniciar o contato.</DialogDescription></DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nome *</Label><Input id="name" value={newLeadData.name} onChange={(e) => setNewLeadData({...newLeadData, name: e.target.value})} className="col-span-3" placeholder="Nome completo do lead"/></div>
+                                    <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="phone" className="text-right">Telefone</Label><Input id="phone" value={newLeadData.phone ?? ''} onChange={handlePhoneChange} className="col-span-3" placeholder="(31) 99999-9999"/></div>
+                                    <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="email" className="text-right">Email</Label><Input id="email" type="email" value={newLeadData.email ?? ''} onChange={(e) => setNewLeadData({...newLeadData, email: e.target.value})} className="col-span-3" placeholder="email@exemplo.com"/></div>
+                                    <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="temperature" className="text-right">Temperatura</Label><Select value={newLeadData.temperature} onValueChange={(value: Lead['temperature']) => setNewLeadData({...newLeadData, temperature: value})}><SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="QUENTE">Quente</SelectItem><SelectItem value="MORNO">Morno</SelectItem><SelectItem value="FRIO">Frio</SelectItem></SelectContent></Select></div>
+                                    <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="purpose" className="text-right">Finalidade</Label><Select value={newLeadData.purpose ?? undefined} onValueChange={(value: Lead['purpose']) => setNewLeadData({...newLeadData, purpose: value})}><SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Venda">Venda</SelectItem><SelectItem value="Aluguel">Aluguel</SelectItem></SelectContent></Select></div>
+                                    <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="desired_value" className="text-right">Orçamento</Label><Input id="desired_value" value={formattedPrice} onChange={handlePriceChange} className="col-span-3" placeholder="R$ 0,00"/></div>
+                                    <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="origin" className="text-right">Canal</Label><Select value={newLeadData.origin ?? undefined} onValueChange={(value: string) => {setShowOriginDetails(value === 'Indicação'); setNewLeadData({...newLeadData, origin: value})}}><SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Redes Sociais">Redes Sociais</SelectItem><SelectItem value="Indicação">Indicação</SelectItem><SelectItem value="Portal Imobiliário">Portal Imobiliário</SelectItem><SelectItem value="Outro">Outro</SelectItem></SelectContent></Select></div>
+                                    {showOriginDetails && <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="origin_details" className="text-right">Indicado por</Label><Input id="origin_details" value={newLeadData.origin_details ?? ''} onChange={(e) => setNewLeadData({...newLeadData, origin_details: e.target.value})} className="col-span-3" placeholder="Nome de quem indicou"/></div>}
+                                    <div className="grid grid-cols-4 items-start gap-4"><Label htmlFor="notes" className="text-right pt-2">Anotações</Label><Textarea id="notes" value={newLeadData.notes ?? ''} onChange={(e) => setNewLeadData({...newLeadData, notes: e.target.value})} className="col-span-3" placeholder="Detalhes importantes sobre o lead..."/></div>
+                                </div>
+                                <DialogFooter><Button variant="secondary" onClick={() => setIsAddModalOpen(false)}>Cancelar</Button><Button onClick={handleAddLead} className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isSubmitting ? "Salvando..." : "Salvar Lead"}</Button></DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
