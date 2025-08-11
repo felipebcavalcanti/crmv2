@@ -9,6 +9,7 @@ import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
 import PropertyManagement from "./pages/PropertyManagement";
+import PropertyNew from "./pages/PropertyNew"; // Importar a página de novo imóvel
 import MarketingIntegrations from "./pages/MarketingIntegrations";
 import LeadManagement from "./pages/LeadManagement";
 import Login from "./pages/Login";
@@ -20,7 +21,7 @@ const queryClient = new QueryClient();
 
 // Componente Wrapper para fornecer dados de projetos ao AppLayout
 const AppWrapper = () => {
-  const { projects } = useProjects(); // Hook é chamado aqui
+  const { projects } = useProjects();
 
   return (
     <BrowserRouter>
@@ -35,7 +36,6 @@ const AppWrapper = () => {
           path="/dashboard" 
           element={
             <ProtectedRoute>
-              {/* AppLayout recebe os projetos para o sidebar */}
               <AppLayout projects={projects}>
                 <Index />
               </AppLayout>
@@ -54,6 +54,7 @@ const AppWrapper = () => {
           } 
         />
         
+        {/* ROTAS DE IMÓVEIS CORRIGIDAS E EXPANDIDAS */}
         <Route 
           path="/properties" 
           element={
@@ -64,7 +65,31 @@ const AppWrapper = () => {
             </ProtectedRoute>
           } 
         />
-        
+        <Route 
+          path="/properties/new" 
+          element={
+            <ProtectedRoute>
+              <AppLayout projects={projects}>
+                <PropertyNew />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+        {/* Adicionando rota de pesquisa como placeholder para evitar erros */}
+        <Route 
+          path="/properties/search" 
+          element={
+            <ProtectedRoute>
+              <AppLayout projects={projects}>
+                <div className="p-8">
+                  <h1 className="text-2xl font-bold">Pesquisa de Imóveis</h1>
+                  <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
+                </div>
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+
         <Route 
           path="/marketing" 
           element={
@@ -100,7 +125,7 @@ const App = () => {
           <AppWrapper />
         </AuthProvider>
       </TooltipProvider>
-    </QueryClientProvider> // CORREÇÃO APLICADA AQUI
+    </QueryClientProvider>
   );
 };
 

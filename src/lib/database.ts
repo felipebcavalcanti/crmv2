@@ -30,7 +30,8 @@ export interface DatabaseProject {
   background_image?: string
   user_id: string
   created_at: string
-  updated_at: string
+  updated_at: string | null;
+  responsible_id?: string | null;
 }
 
 export interface DatabaseResponse<T> {
@@ -72,18 +73,21 @@ export const getProjects = async (): Promise<DatabaseResponse<Project[]>> => {
     }
 
     // Converte os dados do banco para o formato da aplicação
-    const projects: Project[] = data.map(convertDatabaseToProject)
+    const projects: Project[] = data.map(dbProject => ({
+        ...dbProject,
+        deliveryDate: new Date(dbProject.delivery_date)
+    }));
 
     return {
       data: projects,
       error: null,
       success: true
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error fetching projects:', error)
     return {
       data: null,
-      error: 'Erro inesperado ao buscar projetos',
+      error: error.message || 'Erro inesperado ao buscar projetos',
       success: false
     }
   }
@@ -127,19 +131,19 @@ export const getProject = async (projectId: string): Promise<DatabaseResponse<Pr
         success: false
       }
     }
-
-    const project = convertDatabaseToProject(data)
+    
+    const project = { ...data, deliveryDate: new Date(data.delivery_date) };
 
     return {
       data: project,
       error: null,
       success: true
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error fetching project:', error)
     return {
       data: null,
-      error: 'Erro inesperado ao buscar projeto',
+      error: error.message || 'Erro inesperado ao buscar projeto',
       success: false
     }
   }
@@ -161,9 +165,13 @@ export const createProject = async (
         success: false
       }
     }
-
-    // Converte os dados da aplicação para o formato do banco
-    const databaseData = convertProjectToDatabase(projectData, user.id)
+    
+    const databaseData = {
+        ...projectData,
+        user_id: user.id,
+        delivery_date: projectData.deliveryDate.toISOString()
+    };
+    delete (databaseData as any).deliveryDate;
 
     const { data, error } = await supabase
       .from('projects')
@@ -173,25 +181,21 @@ export const createProject = async (
 
     if (error) {
       console.error('Error creating project:', error)
-      return {
-        data: null,
-        error: error.message,
-        success: false
-      }
+      return { data: null, error: error.message, success: false }
     }
 
-    const project = convertDatabaseToProject(data)
+    const project = { ...data, deliveryDate: new Date(data.delivery_date) };
 
     return {
       data: project,
       error: null,
       success: true
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error creating project:', error)
     return {
       data: null,
-      error: 'Erro inesperado ao criar projeto',
+      error: error.message || 'Erro inesperado ao criar projeto',
       success: false
     }
   }
@@ -215,9 +219,11 @@ export const updateProject = async (
       }
     }
 
-    // Converte os dados da aplicação para o formato do banco
-    const databaseUpdates = convertProjectUpdatesToDatabase(updates)
-    databaseUpdates.updated_at = new Date().toISOString()
+    const databaseUpdates: any = { ...updates };
+    if (updates.deliveryDate) {
+        databaseUpdates.delivery_date = updates.deliveryDate.toISOString();
+        delete databaseUpdates.deliveryDate;
+    }
 
     const { data, error } = await supabase
       .from('projects')
@@ -229,33 +235,25 @@ export const updateProject = async (
 
     if (error) {
       console.error('Error updating project:', error)
-      return {
-        data: null,
-        error: error.message,
-        success: false
-      }
+      return { data: null, error: error.message, success: false }
     }
 
     if (!data) {
-      return {
-        data: null,
-        error: 'Projeto não encontrado ou sem permissão',
-        success: false
-      }
+      return { data: null, error: 'Projeto não encontrado ou sem permissão', success: false }
     }
 
-    const project = convertDatabaseToProject(data)
+    const project = { ...data, deliveryDate: new Date(data.delivery_date) };
 
     return {
       data: project,
       error: null,
       success: true
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error updating project:', error)
     return {
       data: null,
-      error: 'Erro inesperado ao atualizar projeto',
+      error: error.message || 'Erro inesperado ao atualizar projeto',
       success: false
     }
   }
@@ -269,11 +267,7 @@ export const deleteProject = async (projectId: string): Promise<DatabaseResponse
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return {
-        data: null,
-        error: 'Usuário não autenticado',
-        success: false
-      }
+      return { data: null, error: 'Usuário não autenticado', success: false }
     }
 
     const { error } = await supabase
@@ -284,11 +278,7 @@ export const deleteProject = async (projectId: string): Promise<DatabaseResponse
 
     if (error) {
       console.error('Error deleting project:', error)
-      return {
-        data: null,
-        error: error.message,
-        success: false
-      }
+      return { data: null, error: error.message, success: false }
     }
 
     return {
@@ -296,85 +286,10 @@ export const deleteProject = async (projectId: string): Promise<DatabaseResponse
       error: null,
       success: true
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error deleting project:', error)
-    return {
-      data: null,
-      error: 'Erro inesperado ao deletar projeto',
-      success: false
-    }
+    return { data: null, error: error.message || 'Erro inesperado ao deletar projeto', success: false }
   }
-}
-
-// ===== FUNÇÕES DE CONVERSÃO =====
-
-/**
- * Converte dados do banco para o formato da aplicação
- */
-function convertDatabaseToProject(dbProject: DatabaseProject): Project {
-  return {
-    id: dbProject.id,
-    name: dbProject.name,
-    description: dbProject.description,
-    allocations: dbProject.allocations || [],
-    deliveryDate: new Date(dbProject.delivery_date),
-    status: dbProject.status,
-    progress: dbProject.progress,
-    weeklyTracking: dbProject.weekly_tracking || [],
-    notes: dbProject.notes,
-    priority: dbProject.priority,
-    checkpoints: dbProject.checkpoints || [],
-    images: dbProject.images || [],
-    backgroundImage: dbProject.background_image,
-  }
-}
-
-/**
- * Converte dados da aplicação para o formato do banco
- */
-function convertProjectToDatabase(
-  project: Omit<Project, 'id'>, 
-  userId: string
-): Omit<DatabaseProject, 'id' | 'created_at' | 'updated_at'> {
-  return {
-    name: project.name,
-    description: project.description || '',
-    allocations: project.allocations || [],
-    delivery_date: project.deliveryDate.toISOString(),
-    status: project.status,
-    progress: project.progress || 0,
-    weekly_tracking: project.weeklyTracking || [],
-    notes: project.notes || '',
-    priority: project.priority,
-    checkpoints: project.checkpoints || [],
-    images: project.images || [],
-    background_image: project.backgroundImage || null,
-    user_id: userId,
-  }
-}
-
-/**
- * Converte atualizações da aplicação para o formato do banco
- */
-function convertProjectUpdatesToDatabase(
-  updates: Partial<Omit<Project, 'id'>>
-): Partial<Omit<DatabaseProject, 'id' | 'user_id' | 'created_at'>> {
-  const databaseUpdates: Partial<Omit<DatabaseProject, 'id' | 'user_id' | 'created_at'>> = {}
-
-  if (updates.name !== undefined) databaseUpdates.name = updates.name
-  if (updates.description !== undefined) databaseUpdates.description = updates.description
-  if (updates.allocations !== undefined) databaseUpdates.allocations = updates.allocations
-  if (updates.deliveryDate !== undefined) databaseUpdates.delivery_date = updates.deliveryDate.toISOString()
-  if (updates.status !== undefined) databaseUpdates.status = updates.status
-  if (updates.progress !== undefined) databaseUpdates.progress = updates.progress
-  if (updates.weeklyTracking !== undefined) databaseUpdates.weekly_tracking = updates.weeklyTracking
-  if (updates.notes !== undefined) databaseUpdates.notes = updates.notes
-  if (updates.priority !== undefined) databaseUpdates.priority = updates.priority
-  if (updates.checkpoints !== undefined) databaseUpdates.checkpoints = updates.checkpoints
-  if (updates.images !== undefined) databaseUpdates.images = updates.images
-  if (updates.backgroundImage !== undefined) databaseUpdates.background_image = updates.backgroundImage
-
-  return databaseUpdates
 }
 
 // ===== OPERAÇÕES DE PERFIL DO USUÁRIO =====
@@ -388,19 +303,12 @@ export interface UserProfile {
   updated_at: string
 }
 
-/**
- * Busca o perfil do usuário
- */
 export const getUserProfile = async (): Promise<DatabaseResponse<UserProfile>> => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return {
-        data: null,
-        error: 'Usuário não autenticado',
-        success: false
-      }
+      return { data: null, error: 'Usuário não autenticado', success: false }
     }
 
     const { data, error } = await supabase
@@ -411,31 +319,16 @@ export const getUserProfile = async (): Promise<DatabaseResponse<UserProfile>> =
 
     if (error) {
       console.error('Error fetching user profile:', error)
-      return {
-        data: null,
-        error: error.message,
-        success: false
-      }
+      return { data: null, error: error.message, success: false }
     }
 
-    return {
-      data: data,
-      error: null,
-      success: true
-    }
-  } catch (error) {
+    return { data: data, error: null, success: true }
+  } catch (error: any) {
     console.error('Unexpected error fetching user profile:', error)
-    return {
-      data: null,
-      error: 'Erro inesperado ao buscar perfil',
-      success: false
-    }
+    return { data: null, error: error.message || 'Erro inesperado ao buscar perfil', success: false }
   }
 }
 
-/**
- * Atualiza o perfil do usuário
- */
 export const updateUserProfile = async (
   updates: Partial<Pick<UserProfile, 'full_name' | 'avatar_url'>>
 ): Promise<DatabaseResponse<UserProfile>> => {
@@ -443,11 +336,7 @@ export const updateUserProfile = async (
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return {
-        data: null,
-        error: 'Usuário não autenticado',
-        success: false
-      }
+      return { data: null, error: 'Usuário não autenticado', success: false }
     }
 
     const profileUpdates = {
@@ -464,30 +353,16 @@ export const updateUserProfile = async (
 
     if (error) {
       console.error('Error updating user profile:', error)
-      return {
-        data: null,
-        error: error.message,
-        success: false
-      }
+      return { data: null, error: error.message, success: false }
     }
 
-    return {
-      data: data,
-      error: null,
-      success: true
-    }
-  } catch (error) {
+    return { data: data, error: null, success: true }
+  } catch (error: any) {
     console.error('Unexpected error updating user profile:', error)
-    return {
-      data: null,
-      error: 'Erro inesperado ao atualizar perfil',
-      success: false
-    }
+    return { data: null, error: error.message || 'Erro inesperado ao atualizar perfil', success: false }
   }
 }
-/**
- * Busca todos os perfis de usuário da organização
- */
+
 export const getAllProfiles = async (): Promise<DatabaseResponse<UserProfile[]>> => {
   try {
     const { data, error } = await supabase
@@ -499,69 +374,179 @@ export const getAllProfiles = async (): Promise<DatabaseResponse<UserProfile[]>>
       return { data: null, error: error.message, success: false };
     }
 
-    return { data, error: null, success: true };
-  } catch (error) {
+    return { data: data || [], error: null, success: true };
+  } catch (error: any) {
     console.error('Unexpected error fetching all profiles:', error);
-    return { data: null, error: 'Erro inesperado ao buscar perfis', success: false };
+    return { data: null, error: error.message || 'Erro inesperado ao buscar perfis', success: false };
   }
 };
-// ===== TYPES PARA IMÓVEIS =====
 
+// ===== TYPES E OPERAÇÕES DE IMÓVEIS =====
 export interface Property {
-  id: string;
-  user_id: string;
-  created_at: string;
-  name: string;
-  location: string;
-  status: 'Disponível' | 'Reservado' | 'Vendido' | 'Indisponível';
-  type: 'Casa' | 'Apartamento' | 'Sobrado' | 'Terreno';
-  purpose: 'Venda' | 'Aluguel';
-  price: number;
-  bedrooms: number;
-  suites: number;
-  bathrooms: number;
-  parking_spots: number;
-  description?: string;
-  images?: any; // JSONB para imagens
+    id: string;
+    user_id: string;
+    created_at: string;
+    updated_at?: string | null;
+    name: string;
+    location: string;
+    status: 'Disponível' | 'Reservado' | 'Vendido' | 'Indisponível';
+    type: 'Casa' | 'Apartamento' | 'Sobrado' | 'Terreno';
+    purpose: 'Venda' | 'Aluguel';
+    price: number;
+    bedrooms: number;
+    suites: number;
+    bathrooms: number;
+    parking_spots: number;
+    description?: string;
+    images?: any;
+}
+  
+export const getProperties = async (): Promise<DatabaseResponse<Property[]>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+  
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+  
+    if (error) {
+      console.error('Erro ao buscar imóveis:', error);
+      return { data: null, error: error.message, success: false };
+    }
+    return { data: data || [], error: null, success: true };
+};
+  
+export const createProperty = async (propertyData: Omit<Property, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<DatabaseResponse<Property>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+  
+    const { data, error } = await supabase
+      .from('properties')
+      .insert({ ...propertyData, user_id: user.id })
+      .select()
+      .single();
+  
+    if (error) {
+      console.error('Erro ao criar imóvel:', error);
+      return { data: null, error: error.message, success: false };
+    }
+    return { data, error: null, success: true };
+};
+
+// ===== OPERAÇÕES DE KANBAN =====
+
+export interface KanbanStage {
+    id: string;
+    user_id: string;
+    name: string;
+    position: number;
+    created_at: string;
 }
 
-// ===== OPERAÇÕES DE IMÓVEIS =====
+export const getKanbanStages = async (): Promise<DatabaseResponse<KanbanStage[]>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
 
-/**
- * Busca todos os imóveis do usuário autenticado
- */
-export const getProperties = async (): Promise<DatabaseResponse<Property[]>> => {
+    const { data, error } = await supabase
+        .from('kanban_stages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('position', { ascending: true });
+
+    if (error) {
+        console.error('Erro ao buscar etapas do Kanban:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data: data || [], error: null, success: true };
+};
+
+export const createDefaultKanbanStages = async (): Promise<DatabaseResponse<KanbanStage[]>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+    const defaultStages = [
+        { user_id: user.id, name: 'Captura', position: 0 },
+        { user_id: user.id, name: 'Qualificação', position: 1 },
+        { user_id: user.id, name: 'Visita Agendada', position: 2 },
+        { user_id: user.id, name: 'Negociação', position: 3 }
+    ];
+
+    const { data, error } = await supabase.from('kanban_stages').insert(defaultStages).select();
+
+    if (error) {
+        console.error('Erro ao criar etapas padrão do Kanban:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data, error: null, success: true };
+};
+
+// ===== TYPES E OPERAÇÕES DE LEADS (ESTRUTURA INTELIGENTE) =====
+
+export interface Lead {
+  id: string;
+  user_id: string;
+  stage_id: string;
+  name: string;
+  temperature: 'QUENTE' | 'MORNO' | 'FRIO';
+  property_of_interest: string | null;
+  next_task: { title: string; dueDate: string } | null;
+  created_at: string;
+  updated_at: string | null;
+  email?: string;
+  phone?: string;
+  next_contact_date?: string | null;
+}
+
+export const getLeads = async (): Promise<DatabaseResponse<Lead[]>> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
 
   const { data, error } = await supabase
-    .from('properties')
+    .from('leads')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Erro ao buscar imóveis:', error);
+    console.error('Erro ao buscar leads:', error);
+    return { data: null, error: error.message, success: false };
+  }
+  return { data: data || [], error: null, success: true };
+};
+
+export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at'>>): Promise<DatabaseResponse<Lead>> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+  const { data, error } = await supabase
+    .from('leads')
+    .insert({ ...leadData, user_id: user.id })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao criar lead:', error);
     return { data: null, error: error.message, success: false };
   }
   return { data, error: null, success: true };
 };
 
-/**
- * Cria um novo imóvel
- */
-export const createProperty = async (propertyData: Omit<Property, 'id' | 'user_id' | 'created_at'>): Promise<DatabaseResponse<Property>> => {
+export const updateLead = async (leadId: string, updates: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>): Promise<DatabaseResponse<Lead>> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
 
   const { data, error } = await supabase
-    .from('properties')
-    .insert({ ...propertyData, user_id: user.id })
+    .from('leads')
+    .update(updates)
+    .eq('id', leadId)
+    .eq('user_id', user.id)
     .select()
     .single();
 
   if (error) {
-    console.error('Erro ao criar imóvel:', error);
+    console.error('Erro ao atualizar lead:', error);
     return { data: null, error: error.message, success: false };
   }
   return { data, error: null, success: true };

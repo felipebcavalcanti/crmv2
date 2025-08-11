@@ -6,16 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Home, Edit, Trash2, Upload, BedDouble, Bath, Car, Loader2 } from "lucide-react";
+import { Edit, Trash2, Upload, BedDouble, Bath, Car, Loader2 } from "lucide-react";
 import { useProperties } from "@/hooks/useProperties";
 import { Property } from "@/lib/database";
 import { toast } from "sonner";
 
-// Definindo o tipo para os dados do formulário, omitindo campos que são gerados automaticamente
 type FormData = Omit<Property, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
 
 const PropertyManagement = () => {
-  // Hook para gerenciar os dados reais dos imóveis, vindo do Supabase
   const { properties, addProperty, loading, error } = useProperties();
 
   const initialFormState: FormData = {
@@ -34,10 +32,29 @@ const PropertyManagement = () => {
   };
   const [formData, setFormData] = useState<FormData>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formattedPrice, setFormattedPrice] = useState("");
 
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/\D/g, '');
+    if (rawValue === '') {
+        setFormData(prev => ({ ...prev, price: 0 }));
+        setFormattedPrice('');
+        return;
+    }
+    const numericValue = Number(rawValue) / 100;
+    
+    setFormData(prev => ({ ...prev, price: numericValue }));
+    setFormattedPrice(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numericValue));
+  };
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
+    const numericFields = ['bedrooms', 'suites', 'bathrooms', 'parking_spots'];
+    if (numericFields.includes(id)) {
+        setFormData(prev => ({ ...prev, [id]: Number(value) || 0 }));
+    } else {
+        setFormData(prev => ({ ...prev, [id]: value }));
+    }
   };
   
   const handleSelectChange = (id: keyof FormData) => (value: string) => {
@@ -52,19 +69,10 @@ const PropertyManagement = () => {
     }
     setIsSubmitting(true);
     try {
-      // Garante que os campos numéricos sejam de fato números
-      const propertyData = {
-        ...formData,
-        price: Number(formData.price) || 0,
-        bedrooms: Number(formData.bedrooms) || 0,
-        suites: Number(formData.suites) || 0,
-        bathrooms: Number(formData.bathrooms) || 0,
-        parking_spots: Number(formData.parking_spots) || 0,
-      };
-      await addProperty(propertyData);
-      setFormData(initialFormState); // Limpa o formulário após o sucesso
+      await addProperty(formData);
+      setFormData(initialFormState);
+      setFormattedPrice("");
     } catch (e) {
-      // O erro já é tratado e exibido via toast pelo hook
       console.error("Falha ao salvar imóvel:", e);
     } finally {
       setIsSubmitting(false);
@@ -94,14 +102,9 @@ const PropertyManagement = () => {
           <CardHeader><CardTitle>Lista de Imóveis</CardTitle></CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex justify-center items-center h-40">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                <p className="ml-4 text-gray-600">Carregando imóveis...</p>
-              </div>
+              <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /><p className="ml-4 text-gray-600">Carregando imóveis...</p></div>
             ) : error ? (
-              <div className="text-center py-10">
-                <p className="text-red-600">{error}</p>
-              </div>
+              <div className="text-center py-10"><p className="text-red-600">{error}</p></div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -115,7 +118,7 @@ const PropertyManagement = () => {
                         <td className="py-4 px-4 text-gray-600">{property.location}</td>
                         <td className="py-4 px-4"><Badge variant={getStatusBadgeVariant(property.status)}>{property.status}</Badge></td>
                         <td className="py-4 px-4 font-medium text-gray-800">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(property.price)}{property.purpose === 'Aluguel' ? '/mês' : ''}</td>
-                        <td className="py-4 px-4"><div className="flex gap-2"><Button size="sm" variant="outline"><Edit className="w-4 h-4 mr-1" />Editar</Button><Button size="sm" variant="destructive"><Trash2 className="w-4 h-4 mr-1" />Excluir</Button></div></td>
+                        <td className="py-4 px-4"><div className="flex gap-2"><Button size="sm" variant="secondary"><Edit className="w-4 h-4 mr-1" />Editar</Button><Button size="sm" variant="destructive"><Trash2 className="w-4 h-4 mr-1" />Excluir</Button></div></td>
                       </tr>
                     ))}
                   </tbody>
@@ -133,37 +136,20 @@ const PropertyManagement = () => {
                 <div><Label htmlFor="name">Nome do Anúncio *</Label><Input id="name" value={formData.name} onChange={handleInputChange} placeholder="Ex: Apartamento 3 quartos no Centro" required /></div>
                 <div><Label htmlFor="location">Localização *</Label><Input id="location" value={formData.location} onChange={handleInputChange} placeholder="Cidade, Estado" required /></div>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div><Label htmlFor="type">Tipo de imóvel</Label><Select value={formData.type} onValueChange={handleSelectChange('type')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Apartamento">Apartamento</SelectItem><SelectItem value="Casa">Casa</SelectItem><SelectItem value="Sobrado">Sobrado</SelectItem><SelectItem value="Terreno">Terreno</SelectItem></SelectContent></Select></div>
                 <div><Label htmlFor="purpose">Finalidade</Label><Select value={formData.purpose} onValueChange={handleSelectChange('purpose')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Venda">Venda</SelectItem><SelectItem value="Aluguel">Aluguel</SelectItem></SelectContent></Select></div>
                 <div><Label htmlFor="status">Status</Label><Select value={formData.status} onValueChange={handleSelectChange('status')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Disponível">Disponível</SelectItem><SelectItem value="Reservado">Reservado</SelectItem><SelectItem value="Vendido">Vendido</SelectItem><SelectItem value="Indisponível">Indisponível</SelectItem></SelectContent></Select></div>
               </div>
-
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <div><Label htmlFor="price">Valor (R$)</Label><Input id="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="250000" /></div>
-                  <div><Label htmlFor="bedrooms"><BedDouble className="w-4 h-4 inline-block mr-1"/>Dorms</Label><Input id="bedrooms" type="number" value={formData.bedrooms} onChange={handleInputChange} placeholder="3" /></div>
-                  <div><Label htmlFor="suites"><Bath className="w-4 h-4 inline-block mr-1"/>Suítes</Label><Input id="suites" type="number" value={formData.suites} onChange={handleInputChange} placeholder="1" /></div>
-                  <div><Label htmlFor="bathrooms"><Bath className="w-4 h-4 inline-block mr-1"/>Banhs</Label><Input id="bathrooms" type="number" value={formData.bathrooms} onChange={handleInputChange} placeholder="2" /></div>
-                  <div><Label htmlFor="parking_spots"><Car className="w-4 h-4 inline-block mr-1"/>Vagas</Label><Input id="parking_spots" type="number" value={formData.parking_spots} onChange={handleInputChange} placeholder="2" /></div>
+                  <div><Label htmlFor="price">Valor (R$)</Label><Input id="price" value={formattedPrice} onChange={handlePriceChange} placeholder="R$ 0,00" /></div>
+                  <div><Label htmlFor="bedrooms"><BedDouble className="w-4 h-4 inline-block mr-1"/>Dorms</Label><Input id="bedrooms" type="number" value={formData.bedrooms} onChange={handleInputChange} placeholder="0" /></div>
+                  <div><Label htmlFor="suites"><Bath className="w-4 h-4 inline-block mr-1"/>Suítes</Label><Input id="suites" type="number" value={formData.suites} onChange={handleInputChange} placeholder="0" /></div>
+                  <div><Label htmlFor="bathrooms"><Bath className="w-4 h-4 inline-block mr-1"/>Banhs</Label><Input id="bathrooms" type="number" value={formData.bathrooms} onChange={handleInputChange} placeholder="0" /></div>
+                  <div><Label htmlFor="parking_spots"><Car className="w-4 h-4 inline-block mr-1"/>Vagas</Label><Input id="parking_spots" type="number" value={formData.parking_spots} onChange={handleInputChange} placeholder="0" /></div>
               </div>
-              
-              <div>
-                <Label htmlFor="photos">Fotos/Vídeos</Label>
-                <div className="mt-2 flex justify-center items-center w-full">
-                  <Label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-100">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="w-8 h-8 mb-2 text-gray-500" />
-                          <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Clique para enviar</span> ou arraste e solte</p>
-                          <p className="text-xs text-gray-500">Funcionalidade em desenvolvimento</p>
-                      </div>
-                      <Input id="file-upload" type="file" className="hidden" multiple disabled />
-                  </Label>
-                </div> 
-              </div>
-
               <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setFormData(initialFormState)}>Cancelar</Button>
+                <Button type="button" variant="secondary" onClick={() => { setFormData(initialFormState); setFormattedPrice(""); }}>Cancelar</Button>
                 <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isSubmitting ? "Salvando..." : "Salvar Imóvel"}
