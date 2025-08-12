@@ -7,7 +7,7 @@ import { WeeklyTracking, Checkpoint, ProjectImage } from '@/pages/Index'
 
 // Tipos internos do banco de dados
 interface DatabaseWeeklyTracking extends Omit<WeeklyTracking, 'week'> {
-  week: string // No banco guardamos como string
+  week: string
 }
 
 interface DatabaseCheckpoint extends Checkpoint {
@@ -31,6 +31,7 @@ export interface DatabaseProject {
   user_id: string
   created_at: string
   updated_at: string
+  responsible_id?: string;
 }
 
 export interface DatabaseResponse<T> {
@@ -41,184 +42,93 @@ export interface DatabaseResponse<T> {
 
 // ===== OPERAÇÕES DE PROJETOS =====
 
-/**
- * Busca todos os projetos do usuário autenticado
- */
 export const getProjects = async (): Promise<DatabaseResponse<Project[]>> => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    
     if (!user) {
-      return {
-        data: null,
-        error: 'Usuário não autenticado',
-        success: false
-      }
+      return { data: null, error: 'Usuário não autenticado', success: false }
     }
-
     const { data, error } = await supabase
       .from('projects')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-
     if (error) {
       console.error('Error fetching projects:', error)
-      return {
-        data: null,
-        error: error.message,
-        success: false
-      }
+      return { data: null, error: error.message, success: false }
     }
-
-    // Converte os dados do banco para o formato da aplicação
     const projects: Project[] = data.map(convertDatabaseToProject)
-
-    return {
-      data: projects,
-      error: null,
-      success: true
-    }
+    return { data: projects, error: null, success: true }
   } catch (error) {
     console.error('Unexpected error fetching projects:', error)
-    return {
-      data: null,
-      error: 'Erro inesperado ao buscar projetos',
-      success: false
-    }
+    return { data: null, error: 'Erro inesperado ao buscar projetos', success: false }
   }
 }
 
-/**
- * Busca um projeto específico por ID
- */
 export const getProject = async (projectId: string): Promise<DatabaseResponse<Project>> => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    
     if (!user) {
-      return {
-        data: null,
-        error: 'Usuário não autenticado',
-        success: false
-      }
+      return { data: null, error: 'Usuário não autenticado', success: false }
     }
-
     const { data, error } = await supabase
       .from('projects')
       .select('*')
       .eq('id', projectId)
       .eq('user_id', user.id)
       .single()
-
     if (error) {
       console.error('Error fetching project:', error)
-      return {
-        data: null,
-        error: error.message,
-        success: false
-      }
+      return { data: null, error: error.message, success: false }
     }
-
     if (!data) {
-      return {
-        data: null,
-        error: 'Projeto não encontrado',
-        success: false
-      }
+      return { data: null, error: 'Projeto não encontrado', success: false }
     }
-
     const project = convertDatabaseToProject(data)
-
-    return {
-      data: project,
-      error: null,
-      success: true
-    }
+    return { data: project, error: null, success: true }
   } catch (error) {
     console.error('Unexpected error fetching project:', error)
-    return {
-      data: null,
-      error: 'Erro inesperado ao buscar projeto',
-      success: false
-    }
+    return { data: null, error: 'Erro inesperado ao buscar projeto', success: false }
   }
 }
 
-/**
- * Cria um novo projeto
- */
 export const createProject = async (
   projectData: Omit<Project, 'id'>
 ): Promise<DatabaseResponse<Project>> => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    
     if (!user) {
-      return {
-        data: null,
-        error: 'Usuário não autenticado',
-        success: false
-      }
+      return { data: null, error: 'Usuário não autenticado', success: false }
     }
-
-    // Converte os dados da aplicação para o formato do banco
     const databaseData = convertProjectToDatabase(projectData, user.id)
-
     const { data, error } = await supabase
       .from('projects')
       .insert(databaseData)
       .select()
       .single()
-
     if (error) {
       console.error('Error creating project:', error)
-      return {
-        data: null,
-        error: error.message,
-        success: false
-      }
+      return { data: null, error: error.message, success: false }
     }
-
     const project = convertDatabaseToProject(data)
-
-    return {
-      data: project,
-      error: null,
-      success: true
-    }
+    return { data: project, error: null, success: true }
   } catch (error) {
     console.error('Unexpected error creating project:', error)
-    return {
-      data: null,
-      error: 'Erro inesperado ao criar projeto',
-      success: false
-    }
+    return { data: null, error: 'Erro inesperado ao criar projeto', success: false }
   }
 }
 
-/**
- * Atualiza um projeto existente
- */
 export const updateProject = async (
   projectId: string,
   updates: Partial<Omit<Project, 'id'>>
 ): Promise<DatabaseResponse<Project>> => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    
     if (!user) {
-      return {
-        data: null,
-        error: 'Usuário não autenticado',
-        success: false
-      }
+      return { data: null, error: 'Usuário não autenticado', success: false }
     }
-
-    // Converte os dados da aplicação para o formato do banco
     const databaseUpdates = convertProjectUpdatesToDatabase(updates)
     databaseUpdates.updated_at = new Date().toISOString()
-
     const { data, error } = await supabase
       .from('projects')
       .update(databaseUpdates)
@@ -226,91 +136,43 @@ export const updateProject = async (
       .eq('user_id', user.id)
       .select()
       .single()
-
     if (error) {
       console.error('Error updating project:', error)
-      return {
-        data: null,
-        error: error.message,
-        success: false
-      }
+      return { data: null, error: error.message, success: false }
     }
-
     if (!data) {
-      return {
-        data: null,
-        error: 'Projeto não encontrado ou sem permissão',
-        success: false
-      }
+      return { data: null, error: 'Projeto não encontrado ou sem permissão', success: false }
     }
-
     const project = convertDatabaseToProject(data)
-
-    return {
-      data: project,
-      error: null,
-      success: true
-    }
+    return { data: project, error: null, success: true }
   } catch (error) {
     console.error('Unexpected error updating project:', error)
-    return {
-      data: null,
-      error: 'Erro inesperado ao atualizar projeto',
-      success: false
-    }
+    return { data: null, error: 'Erro inesperado ao atualizar projeto', success: false }
   }
 }
 
-/**
- * Deleta um projeto
- */
 export const deleteProject = async (projectId: string): Promise<DatabaseResponse<boolean>> => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    
     if (!user) {
-      return {
-        data: null,
-        error: 'Usuário não autenticado',
-        success: false
-      }
+      return { data: null, error: 'Usuário não autenticado', success: false }
     }
-
     const { error } = await supabase
       .from('projects')
       .delete()
       .eq('id', projectId)
       .eq('user_id', user.id)
-
     if (error) {
       console.error('Error deleting project:', error)
-      return {
-        data: null,
-        error: error.message,
-        success: false
-      }
+      return { data: null, error: error.message, success: false }
     }
-
-    return {
-      data: true,
-      error: null,
-      success: true
-    }
+    return { data: true, error: null, success: true }
   } catch (error) {
     console.error('Unexpected error deleting project:', error)
-    return {
-      data: null,
-      error: 'Erro inesperado ao deletar projeto',
-      success: false
-    }
+    return { data: null, error: 'Erro inesperado ao deletar projeto', success: false }
   }
 }
 
-// ===== FUNÇÕES DE CONVERSÃO =====
-
-/**
- * Converte dados do banco para o formato da aplicação
- */
 function convertDatabaseToProject(dbProject: DatabaseProject): Project {
   return {
     id: dbProject.id,
@@ -326,14 +188,12 @@ function convertDatabaseToProject(dbProject: DatabaseProject): Project {
     checkpoints: dbProject.checkpoints || [],
     images: dbProject.images || [],
     backgroundImage: dbProject.background_image,
+    responsible_id: dbProject.responsible_id,
   }
 }
 
-/**
- * Converte dados da aplicação para o formato do banco
- */
 function convertProjectToDatabase(
-  project: Omit<Project, 'id'>, 
+  project: Omit<Project, 'id'>,
   userId: string
 ): Omit<DatabaseProject, 'id' | 'created_at' | 'updated_at'> {
   return {
@@ -348,19 +208,16 @@ function convertProjectToDatabase(
     priority: project.priority,
     checkpoints: project.checkpoints || [],
     images: project.images || [],
-    background_image: project.backgroundImage || null,
+    background_image: project.backgroundImage || undefined,
     user_id: userId,
+    responsible_id: project.responsible_id,
   }
 }
 
-/**
- * Converte atualizações da aplicação para o formato do banco
- */
 function convertProjectUpdatesToDatabase(
   updates: Partial<Omit<Project, 'id'>>
 ): Partial<Omit<DatabaseProject, 'id' | 'user_id' | 'created_at'>> {
   const databaseUpdates: Partial<Omit<DatabaseProject, 'id' | 'user_id' | 'created_at'>> = {}
-
   if (updates.name !== undefined) databaseUpdates.name = updates.name
   if (updates.description !== undefined) databaseUpdates.description = updates.description
   if (updates.allocations !== undefined) databaseUpdates.allocations = updates.allocations
@@ -373,11 +230,9 @@ function convertProjectUpdatesToDatabase(
   if (updates.checkpoints !== undefined) databaseUpdates.checkpoints = updates.checkpoints
   if (updates.images !== undefined) databaseUpdates.images = updates.images
   if (updates.backgroundImage !== undefined) databaseUpdates.background_image = updates.backgroundImage
-
+  if (updates.responsible_id !== undefined) databaseUpdates.responsible_id = updates.responsible_id
   return databaseUpdates
 }
-
-// ===== OPERAÇÕES DE PERFIL DO USUÁRIO =====
 
 export interface UserProfile {
   id: string
@@ -391,22 +246,18 @@ export interface UserProfile {
 export const getUserProfile = async (): Promise<DatabaseResponse<UserProfile>> => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    
     if (!user) {
       return { data: null, error: 'Usuário não autenticado', success: false }
     }
-
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single()
-
     if (error) {
       console.error('Error fetching user profile:', error)
       return { data: null, error: error.message, success: false }
     }
-
     return { data: data, error: null, success: true }
   } catch (error: any) {
     console.error('Unexpected error fetching user profile:', error)
@@ -419,28 +270,23 @@ export const updateUserProfile = async (
 ): Promise<DatabaseResponse<UserProfile>> => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    
     if (!user) {
       return { data: null, error: 'Usuário não autenticado', success: false }
     }
-
     const profileUpdates = {
       ...updates,
       updated_at: new Date().toISOString()
     }
-
     const { data, error } = await supabase
       .from('profiles')
       .update(profileUpdates)
       .eq('id', user.id)
       .select()
       .single()
-
     if (error) {
       console.error('Error updating user profile:', error)
       return { data: null, error: error.message, success: false }
     }
-
     return { data: data, error: null, success: true }
   } catch (error: any) {
     console.error('Unexpected error updating user profile:', error)
@@ -453,12 +299,10 @@ export const getAllProfiles = async (): Promise<DatabaseResponse<UserProfile[]>>
     const { data, error } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url');
-
     if (error) {
       console.error('Error fetching all profiles:', error);
       return { data: null, error: error.message, success: false };
     }
-
     return { data: data || [], error: null, success: true };
   } catch (error: any) {
     console.error('Unexpected error fetching all profiles:', error);
@@ -466,7 +310,6 @@ export const getAllProfiles = async (): Promise<DatabaseResponse<UserProfile[]>>
   }
 };
 
-// ===== TYPES E OPERAÇÕES DE IMÓVEIS =====
 export interface Property {
     id: string;
     user_id: string;
@@ -520,8 +363,6 @@ export const createProperty = async (propertyData: Omit<Property, 'id' | 'user_i
     return { data, error: null, success: true };
 };
 
-// ===== OPERAÇÕES DE KANBAN =====
-
 export interface KanbanStage {
     id: string;
     user_id: string;
@@ -555,9 +396,7 @@ export const createDefaultKanbanStages = async (): Promise<DatabaseResponse<Kanb
         { user_id: user.id, name: 'Captura', position: 0 },
         { user_id: user.id, name: 'Qualificação', position: 1 },
         { user_id: user.id, name: 'Visita Agendada', position: 2 },
-        { user_id: user.id, name: 'Negociação', position: 3 },
-        { user_id: user.id, name: 'Ganhos', position: 4 },
-        { user_id: user.id, name: 'Perdidos', position: 5 }
+        { user_id: user.id, name: 'Negociação', position: 3 }
     ];
 
     const { data, error } = await supabase.from('kanban_stages').insert(defaultStages).select();
@@ -577,15 +416,24 @@ export interface Lead {
   stage_id: string;
   name: string;
   temperature: 'QUENTE' | 'MORNO' | 'FRIO';
-  property_of_interest: string | null;
-  next_task: { title: string; dueDate: string } | null;
   created_at: string;
   updated_at: string | null;
   email?: string;
   phone?: string;
+  outcome: 'Ganho' | 'Perdido' | null;
+  status: 'Ativo' | 'Finalizado' | null;
+  purpose: 'Venda' | 'Aluguel' | null;
+  desired_value: number | null;
+  origin: string | null;
+  origin_details: string | null;
+  notes: string | null;
+  last_activity_at: string | null;
+  property_of_interest?: string | null;
+  next_task?: { title: string; dueDate: string } | null;
   next_contact_date?: string | null;
 }
 
+// Busca apenas leads ativos para o Kanban
 export const getLeads = async (): Promise<DatabaseResponse<Lead[]>> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
@@ -594,6 +442,7 @@ export const getLeads = async (): Promise<DatabaseResponse<Lead[]>> => {
     .from('leads')
     .select('*')
     .eq('user_id', user.id)
+    .is('outcome', null) // Apenas leads ativos
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -603,21 +452,22 @@ export const getLeads = async (): Promise<DatabaseResponse<Lead[]>> => {
   return { data: data || [], error: null, success: true };
 };
 
-export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at'>>): Promise<DatabaseResponse<Lead>> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+// Garante que o lead é criado como 'Ativo'
+export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'last_activity_at'>>): Promise<DatabaseResponse<Lead>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
 
-  const { data, error } = await supabase
-    .from('leads')
-    .insert({ ...leadData, user_id: user.id })
-    .select()
-    .single();
+    const { data, error } = await supabase
+        .from('leads')
+        .insert({ ...leadData, user_id: user.id, outcome: null, status: 'Ativo' })
+        .select()
+        .single();
 
-  if (error) {
-    console.error('Erro ao criar lead:', error);
-    return { data: null, error: error.message, success: false };
-  }
-  return { data, error: null, success: true };
+    if (error) {
+        console.error('Erro ao criar lead:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data, error: null, success: true };
 };
 
 export const updateLead = async (leadId: string, updates: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>): Promise<DatabaseResponse<Lead>> => {
@@ -626,7 +476,7 @@ export const updateLead = async (leadId: string, updates: Partial<Omit<Lead, 'id
 
   const { data, error } = await supabase
     .from('leads')
-    .update(updates)
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', leadId)
     .eq('user_id', user.id)
     .select()
@@ -638,3 +488,75 @@ export const updateLead = async (leadId: string, updates: Partial<Omit<Lead, 'id
   }
   return { data, error: null, success: true };
 };
+
+// Utiliza a função RPC para buscar inativos
+export const getInactiveLeads = async (filter: 'Ganho' | 'Perdido' | 'all' = 'all'): Promise<DatabaseResponse<Lead[]>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+    
+    const filterStatus = filter === 'all' ? null : filter;
+
+    const { data, error } = await supabase.rpc('get_inactive_leads', { p_user_id: user.id, filter_status: filterStatus });
+
+    if (error) {
+        console.error('Erro ao buscar leads inativos:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data: data || [], error: null, success: true };
+};
+
+// Utiliza a função RPC para busca global
+export const searchLeads = async (query: string, filter?: 'Ganho' | 'Perdido' | null): Promise<DatabaseResponse<Lead[]>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+    const { data, error } = await supabase.rpc('search_all_leads', { p_user_id: user.id, search_term: query, filter_status: filter });
+
+    if (error) {
+        console.error('Erro ao pesquisar leads:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data: data || [], error: null, success: true };
+}
+
+// ===== TYPES E OPERAÇÕES DE HISTÓRICO DE LEADS (IMUTÁVEL) =====
+
+export interface LeadEvent {
+    id: string;
+    user_id: string;
+    lead_id: string;
+    event_type: 'Criação' | 'Ganho' | 'Perdido' | 'Reativação' | 'Movimentação' | 'Anotação';
+    details: object | null;
+    created_at: string;
+}
+
+export const createLeadEvent = async (eventData: Omit<LeadEvent, 'id' | 'user_id' | 'created_at'>): Promise<DatabaseResponse<LeadEvent>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+    const { data, error } = await supabase.from('lead_events').insert({ ...eventData, user_id: user.id }).select().single();
+    
+    if (error) {
+        console.error('Erro ao criar evento de lead:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data, error: null, success: true };
+};
+
+export const getLeadEvents = async (leadId: string): Promise<DatabaseResponse<LeadEvent[]>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+    const { data, error } = await supabase
+        .from('lead_events')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Erro ao buscar eventos do lead:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data: data || [], error: null, success: true };
+}

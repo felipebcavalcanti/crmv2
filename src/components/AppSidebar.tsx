@@ -7,7 +7,8 @@ import {
   Users,
   Megaphone,
   LogOut,
-  User
+  User,
+  FolderKanban // Ícone atualizado para Projetos
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Project } from "@/pages/Index";
@@ -25,7 +26,7 @@ interface AppSidebarProps {
   projects?: Project[];
 }
 
-// Estrutura de dados para o menu, agora com suporte a submenus e novas opções de imóveis
+// Estrutura de dados do menu
 const menuItems = [
   { 
     id: "dashboard", 
@@ -36,7 +37,7 @@ const menuItems = [
   { 
     id: "projects", 
     label: "Projetos", 
-    icon: Home, 
+    icon: FolderKanban, // Ícone trocado para melhor representar projetos
     path: "/projects",
     submenus: [
         { id: "projects-overview", label: "Visão Geral", path: "/projects" },
@@ -81,17 +82,17 @@ export const AppSidebar = ({ projects = [] }: AppSidebarProps) => {
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate('/'); // Redireciona para a página de login após o logout
+      navigate('/');
     } catch (error) {
       console.error("Erro no logout:", error);
     }
   };
   
-  // Determina qual item do acordeão deve estar aberto com base na rota atual
   const activeMenu = menuItems.find(item => item.submenus && location.pathname.startsWith(item.path));
 
   return (
-    <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col shadow-lg">
+    // CORREÇÃO: h-screen foi trocado para h-full para garantir que o componente se ajuste ao contêiner pai, que já tem h-screen.
+    <div className="w-64 h-full bg-white border-r border-gray-200 flex flex-col shadow-lg">
       {/* Cabeçalho do Sidebar */}
       <div className="p-4 border-b">
         <h1 className="text-2xl font-bold text-blue-600">CRM Imob</h1>
@@ -141,7 +142,7 @@ export const AppSidebar = ({ projects = [] }: AppSidebarProps) => {
                 <AccordionTrigger 
                   className={cn(
                     "py-2 px-3 hover:bg-gray-100 rounded-md text-sm font-medium hover:no-underline",
-                    isParentActive && "text-blue-600"
+                    isParentActive && "bg-slate-100 text-blue-600" // Estilo melhorado para o grupo ativo
                   )}
                 >
                   <div className="flex items-center">
@@ -172,7 +173,7 @@ export const AppSidebar = ({ projects = [] }: AppSidebarProps) => {
         </Accordion>
       </nav>
 
-      {/* Rodapé com Logout */}
+      {/* Rodapé com Logout - A classe mt-auto empurra este elemento para o final do contêiner flex */}
       <div className="p-4 border-t mt-auto">
         <Button
           onClick={handleLogout}
