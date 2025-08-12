@@ -652,3 +652,62 @@ export const updateTaskStatus = async (taskId: string, status: 'pendente' | 'con
     }
     return { data, error: null, success: true };
 };
+/**
+ * Busca as tarefas concluídas mais recentes para o usuário logado
+ */
+export const getCompletedTasks = async (): Promise<DatabaseResponse<Task[]>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+    const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+            *,
+            leads ( name )
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'concluida')
+        .order('completed_at', { ascending: false }) // Mostra as mais recentes primeiro
+        .limit(50); // Limita a 50 para não sobrecarregar a tela
+
+    if (error) {
+        console.error('Erro ao buscar tarefas concluídas:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data: data || [], error: null, success: true };
+};
+// ===== TYPES E OPERAÇÕES DE IMÓVEIS=====
+/**
+ * Busca um imóvel específico pelo ID usando a função RPC
+ */
+export const getPropertyById = async (propertyId: string): Promise<DatabaseResponse<Property>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+    const { data, error } = await supabase
+        .rpc('get_property_by_id', { p_property_id: propertyId })
+        .single();
+
+    if (error) {
+        console.error('Erro ao buscar detalhes do imóvel:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data, error: null, success: true };
+};
+
+/**
+ * Pesquisa imóveis usando a função RPC
+ */
+export const searchProperties = async (searchTerm: string): Promise<DatabaseResponse<Property[]>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+    const { data, error } = await supabase
+        .rpc('search_properties', { search_term: searchTerm });
+
+    if (error) {
+        console.error('Erro ao pesquisar imóveis:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data: data || [], error: null, success: true };
+};

@@ -1,54 +1,73 @@
 // src/hooks/useTasks.ts
 import { useState, useEffect, useCallback } from 'react';
-import { Task, getPendingTasks, updateTaskStatus, createManualTask } from '@/lib/database'; // Adicionado createManualTask
+import { Task, getPendingTasks, getCompletedTasks, updateTaskStatus, createManualTask } from '@/lib/database'; // Adicionado getCompletedTasks
 import { toast } from 'sonner';
 
 export const useTasks = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<Task[]>([]); // Novo estado para tarefas concluídas
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const result = await getPendingTasks();
     
-    if (result.success && result.data) {
-      setTasks(result.data);
+    // Busca as duas listas de tarefas em paralelo para mais performance
+    const [pendingResult, completedResult] = await Promise.all([
+        getPendingTasks(),
+        getCompletedTasks()
+    ]);
+    
+    if (pendingResult.success && pendingResult.data) {
+      setPendingTasks(pendingResult.data);
     } else {
-      setError(result.error || 'Erro ao buscar tarefas');
+      setError(pendingResult.error || 'Erro ao buscar tarefas pendentes');
       toast.error('Erro', {
-        description: result.error || 'Não foi possível carregar a lista de tarefas.'
+        description: pendingResult.error || 'Não foi possível carregar as tarefas pendentes.'
       });
+    }
+
+    if (completedResult.success && completedResult.data) {
+      setCompletedTasks(completedResult.data);
+    } else {
+        setError(completedResult.error || 'Erro ao buscar histórico de tarefas');
+        toast.error('Erro', {
+            description: completedResult.error || 'Não foi possível carregar o histórico de tarefas.'
+        });
     }
     
     setLoading(false);
   }, []);
 
   const completeTask = useCallback(async (taskId: string) => {
-    const originalTasks = [...tasks];
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    const taskToComplete = pendingTasks.find(task => task.id === taskId);
+    if (!taskToComplete) return;
+
+    // Atualização otimista: move a tarefa da lista de pendentes para a de concluídas
+    setPendingTasks(prev => prev.filter(task => task.id !== taskId));
+    setCompletedTasks(prev => [{ ...taskToComplete, status: 'concluida', completed_at: new Date().toISOString() }, ...prev]);
 
     const result = await updateTaskStatus(taskId, 'concluida');
     
     if (!result.success) {
       toast.error('Erro ao concluir tarefa', {
-        description: result.error || 'A tarefa foi restaurada.'
+        description: result.error || 'A alteração foi desfeita.'
       });
-      setTasks(originalTasks);
+      // Em caso de erro, reverte as listas para o estado original buscando os dados novamente
+      await fetchTasks();
     } else {
       toast.success('Tarefa concluída!');
     }
-  }, [tasks]);
+  }, [pendingTasks, fetchTasks]);
 
-  // NOVA FUNÇÃO: Adiciona uma tarefa manual
   const addManualTask = useCallback(async (taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'status' | 'type' | 'completed_at' | 'leads'>) => {
     const result = await createManualTask(taskData);
 
     if (result.success && result.data) {
         toast.success('Tarefa manual criada com sucesso!');
-        // Adiciona a nova tarefa no topo da lista para feedback imediato
-        setTasks(prevTasks => [result.data!, ...prevTasks]);
+        // Adiciona a nova tarefa à lista de pendentes para feedback imediato
+        setPendingTasks(prevTasks => [result.data!, ...prevTasks]);
         return true;
     } else {
         toast.error('Erro ao criar tarefa', {
@@ -63,11 +82,13 @@ export const useTasks = () => {
   }, [fetchTasks]);
 
   return { 
-    tasks, 
+    tasks: pendingTasks, // Mantém 'tasks' como a lista de pendentes por compatibilidade
+    pendingTasks,
+    completedTasks,
     loading, 
     error, 
     fetchTasks, 
     completeTask,
-    addManualTask // Exporta a nova função
+    addManualTask
   };
 };
