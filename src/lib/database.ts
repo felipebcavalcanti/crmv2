@@ -560,3 +560,95 @@ export const getLeadEvents = async (leadId: string): Promise<DatabaseResponse<Le
     }
     return { data: data || [], error: null, success: true };
 }
+// ===== TYPES E OPERAÇÕES DE TAREFAS (MISSÃO DIÁRIA) =====
+
+export interface Task {
+    id: string;
+    user_id: string;
+    lead_id: string | null;
+    title: string;
+    due_date: string;
+    priority: 'alta' | 'media' | 'baixa';
+    status: 'pendente' | 'concluida';
+    type: 'NOVO_LEAD' | 'REGRA_MOTOR' | 'MANUAL';
+    created_at: string;
+    completed_at: string | null;
+    // Campo para JOIN com a tabela de leads
+    leads?: { name: string } | null;
+}
+/**
+ * Cria uma nova tarefa manual para o usuário logado
+ */
+export const createManualTask = async (taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'status' | 'type' | 'completed_at' | 'leads'>): Promise<DatabaseResponse<Task>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+    const { data, error } = await supabase
+        .from('tasks')
+        .insert({
+            ...taskData,
+            user_id: user.id,
+            type: 'MANUAL', // Define o tipo da tarefa como MANUAL
+            status: 'pendente'
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Erro ao criar tarefa manual:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data, error: null, success: true };
+};
+
+/**
+ * Busca todas as tarefas pendentes para o usuário logado
+ */
+export const getPendingTasks = async (): Promise<DatabaseResponse<Task[]>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+    const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+            *,
+            leads ( name )
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'pendente')
+        .order('priority', { ascending: true }) // 'alta' vem primeiro
+        .order('due_date', { ascending: true });
+
+    if (error) {
+        console.error('Erro ao buscar tarefas:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data: data || [], error: null, success: true };
+};
+
+/**
+ * Atualiza o status de uma tarefa (ex: para 'concluida')
+ */
+export const updateTaskStatus = async (taskId: string, status: 'pendente' | 'concluida'): Promise<DatabaseResponse<Task>> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: 'Usuário não autenticado', success: false };
+
+    const updates = {
+        status: status,
+        completed_at: status === 'concluida' ? new Date().toISOString() : null
+    };
+
+    const { data, error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', taskId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Erro ao atualizar tarefa:', error);
+        return { data: null, error: error.message, success: false };
+    }
+    return { data, error: null, success: true };
+};
