@@ -40,10 +40,10 @@ const Register = () => {
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true)
     const { error } = await signUp(data.email, data.password)
-    
+
     if (error) {
       toast.error('Erro no cadastro', {
-        description: error,
+        description: error.message || 'Ocorreu um erro ao realizar o cadastro',
       })
     } else {
       toast.success('Cadastro realizado com sucesso!', {

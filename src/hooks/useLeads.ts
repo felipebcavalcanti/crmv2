@@ -77,17 +77,39 @@ export const useLeads = () => {
     }, [stages, fetchData]);
 
     const updateLeadStage = useCallback(async (leadId: string, newStageId: string) => {
-        const result = await updateLead(leadId, { stage_id: newStageId });
-        
-        if (result.success) {
-            const stageName = stages.find(s => s.id === newStageId)?.name || 'etapa desconhecida';
-            await createLeadEvent({ lead_id: leadId, event_type: 'Movimentação', details: { to: stageName } });
-            await fetchData();
-        } else {
-            toast.error('Falha ao mover o lead', { description: result.error || 'A alteração foi desfeita.' });
-            await fetchData();
+        // Atualização otimista - atualiza o estado local imediatamente
+        setActiveLeads(prevLeads => 
+            prevLeads.map(lead => 
+                lead.id === leadId 
+                    ? { ...lead, stage_id: newStageId, updated_at: new Date().toISOString() }
+                    : lead
+            )
+        );
+
+        try {
+            const result = await updateLead(leadId, { stage_id: newStageId });
+            
+            if (result.success) {
+                const stageName = stages.find(s => s.id === newStageId)?.name || 'etapa desconhecida';
+                await createLeadEvent({ lead_id: leadId, event_type: 'Movimentação', details: { to: stageName } });
+            } else {
+                // Se falhou, reverte a mudança otimista
+                toast.error('Falha ao mover o lead', { description: result.error || 'A alteração foi desfeita.' });
+                // Recarrega os dados para sincronizar com o servidor
+                const leadsResult = await getLeads();
+                if (leadsResult.success && leadsResult.data) {
+                    setActiveLeads(leadsResult.data);
+                }
+            }
+        } catch {
+            // Se deu erro, reverte a mudança otimista
+            toast.error('Erro ao mover o lead');
+            const leadsResult = await getLeads();
+            if (leadsResult.success && leadsResult.data) {
+                setActiveLeads(leadsResult.data);
+            }
         }
-    }, [stages, fetchData]);
+    }, [stages]);
 
     const updateLeadOutcome = useCallback(async (leadId: string, outcome: 'Ganho' | 'Perdido' | 'Ativo', details: object = {}) => {
         let errorOccurred = false;

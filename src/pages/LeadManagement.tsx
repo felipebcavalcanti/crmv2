@@ -137,8 +137,17 @@ const LeadManagement = () => {
 
     const onDragEnd: OnDragEndResponder = (result) => {
         const { destination, source, draggableId } = result;
-        if (!destination || (destination.droppableId === source.droppableId)) return;
-        updateLeadStage(draggableId, destination.droppableId);
+        
+        // Se não há destino válido, não faz nada
+        if (!destination) return;
+        
+        // Se não mudou de posição nem de coluna, não faz nada
+        if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+        
+        // Se mudou apenas de coluna (não de posição na mesma coluna)
+        if (destination.droppableId !== source.droppableId) {
+            updateLeadStage(draggableId, destination.droppableId);
+        }
     };
     
     if (loading) return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>;
