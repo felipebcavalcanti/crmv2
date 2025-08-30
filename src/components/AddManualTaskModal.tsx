@@ -47,7 +47,7 @@ export const AddManualTaskModal = ({ onAddTask, onClose }: AddManualTaskModalPro
   };
 
   return (
-    <DialogContent className="sm:max-w-[425px] bg-white">
+    <DialogContent className="sm:max-w-[425px] bg-background">
       <DialogHeader>
         <DialogTitle>Adicionar Tarefa Manual</DialogTitle>
         <DialogDescription>
@@ -112,7 +112,7 @@ export const AddManualTaskModal = ({ onAddTask, onClose }: AddManualTaskModalPro
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
           {/* BOTÃO ESTILIZADO COM A COR PRIMÁRIA DO CRM */}
-          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90">
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Salvar Tarefa
           </Button>

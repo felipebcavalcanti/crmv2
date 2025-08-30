@@ -51,26 +51,26 @@ const ArchivedLeads = () => {
 
   const OutcomeBadge = ({ outcome }: { outcome: Lead['outcome'] }) => {
     if (outcome === 'Ganho') {
-      return <Badge className="bg-green-100 text-green-800"><ThumbsUp className="w-3 h-3 mr-1"/> Ganho</Badge>;
+      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"><ThumbsUp className="w-3 h-3 mr-1"/> Ganho</Badge>;
     }
     return <Badge variant="destructive"><ThumbsDown className="w-3 h-3 mr-1"/> Perdido</Badge>;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-4 sm:p-8">
+    <div className="dark min-h-screen bg-background p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">Arquivo de Leads</h1>
-                <p className="text-gray-600 mt-1">Pesquise, filtre e reative leads ganhos ou perdidos.</p>
+                <h1 className="text-3xl font-bold text-foreground tracking-tight">Arquivo de Leads</h1>
+                <p className="text-muted-foreground mt-1">Pesquise, filtre e reative leads ganhos ou perdidos.</p>
             </div>
         </div>
 
-        <Card>
+        <Card className="bg-card border-border">
             <CardHeader>
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-grow">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
                             placeholder="Pesquisar por nome, email ou telefone..." 
                             className="pl-10"
@@ -87,12 +87,12 @@ const ArchivedLeads = () => {
             </CardHeader>
             <CardContent>
                 {loading ? (
-                    <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
+                    <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                 ) : leads.length === 0 ? (
                     <div className="text-center py-16 px-6">
-                        <Inbox className="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 className="mt-2 text-lg font-semibold text-gray-800">Nenhum lead encontrado</h3>
-                        <p className="mt-1 text-gray-500">
+                        <Inbox className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <h3 className="mt-2 text-lg font-semibold text-foreground">Nenhum lead encontrado</h3>
+                        <p className="mt-1 text-muted-foreground">
                             {searchQuery ? "Tente uma busca diferente." : "Ainda não há leads ganhos ou perdidos."}
                         </p>
                     </div>

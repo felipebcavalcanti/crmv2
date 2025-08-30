@@ -25,34 +25,34 @@ const Projects = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <span className="ml-4 text-lg text-gray-700">Carregando projetos...</span>
+      <div className="flex h-screen w-full items-center justify-center bg-background dark">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-4 text-lg text-foreground">Carregando projetos...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen w-full items-center justify-center text-red-600">
+      <div className="flex h-screen w-full items-center justify-center bg-background text-destructive dark">
         <p>Erro ao carregar os projetos: {error}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-8">
+    <div className="min-h-screen bg-background p-8 dark">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Projetos</h1>
-            <p className="text-gray-600 mt-1">Gerencie, adicione e visualize todos os seus projetos.</p>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">Projetos</h1>
+            <p className="text-muted-foreground mt-1">Gerencie, adicione e visualize todos os seus projetos.</p>
           </div>
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <Button 
               onClick={() => setIsAddModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 shadow-md"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
             >
               <Plus className="w-4 h-4 mr-2" />
               Novo Projeto
@@ -78,14 +78,14 @@ const Projects = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 border-2 border-dashed rounded-lg">
-            <FolderOpen className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900">Nenhum projeto encontrado</h3>
-            <p className="mt-1 text-sm text-gray-500">Comece criando seu primeiro projeto.</p>
+          <div className="text-center py-16 border-2 border-dashed border-border rounded-lg bg-card/30">
+            <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-2 text-sm font-semibold text-foreground">Nenhum projeto encontrado</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Comece criando seu primeiro projeto.</p>
             <div className="mt-6">
               <Button
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Criar Novo Projeto

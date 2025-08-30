@@ -20,7 +20,7 @@ const PropertyCard = ({ property }: { property: Property }) => {
     };
     
     return (
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow bg-card border-border">
             <CardHeader>
                 <CardTitle className="truncate">{property.name}</CardTitle>
                 <CardDescription>{property.location}</CardDescription>
@@ -28,15 +28,15 @@ const PropertyCard = ({ property }: { property: Property }) => {
             <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
                     <Badge variant={getStatusBadgeVariant(property.status)}>{property.status}</Badge>
-                    <div className="font-bold text-lg text-blue-600">
+                    <div className="font-bold text-lg text-primary">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(property.price)}
-                        {property.purpose === 'Aluguel' ? <span className="text-sm font-normal text-gray-500">/mês</span> : ''}
+                        {property.purpose === 'Aluguel' ? <span className="text-sm font-normal text-muted-foreground">/mês</span> : ''}
                     </div>
                 </div>
-                <div className="flex justify-between text-sm text-gray-600 border-t pt-3">
-                    <div className="flex items-center gap-1"><BedDouble className="w-4 h-4 text-gray-500" /> {property.bedrooms}</div>
-                    <div className="flex items-center gap-1"><Bath className="w-4 h-4 text-gray-500" /> {property.bathrooms}</div>
-                    <div className="flex items-center gap-1"><Car className="w-4 h-4 text-gray-500" /> {property.parking_spots}</div>
+                <div className="flex justify-between text-sm text-muted-foreground border-t border-border pt-3">
+                    <div className="flex items-center gap-1"><BedDouble className="w-4 h-4 text-muted-foreground" /> {property.bedrooms}</div>
+                    <div className="flex items-center gap-1"><Bath className="w-4 h-4 text-muted-foreground" /> {property.bathrooms}</div>
+                    <div className="flex items-center gap-1"><Car className="w-4 h-4 text-muted-foreground" /> {property.parking_spots}</div>
                 </div>
                 <Link to={`/properties/${property.id}`} className="w-full">
                     <Button variant="outline" className="w-full mt-2">
@@ -66,11 +66,11 @@ const PropertySearch = () => {
     }, [searchTerm, searchForProperties]);
 
     return (
-        <div className="min-h-screen bg-gray-50/50 p-4 sm:p-8">
+        <div className="dark min-h-screen bg-background p-4 sm:p-8">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Pesquisar Imóveis</h1>
-                    <p className="text-gray-600 mt-1">Encontre imóveis por nome, localização ou descrição.</p>
+                    <h1 className="text-3xl font-bold text-foreground tracking-tight">Pesquisar Imóveis</h1>
+                    <p className="text-muted-foreground mt-1">Encontre imóveis por nome, localização ou descrição.</p>
                 </div>
 
                 <div className="flex gap-2 mb-8">
@@ -90,13 +90,13 @@ const PropertySearch = () => {
                 <div>
                     {loading ? (
                         <div className="flex justify-center items-center py-16">
-                            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
                     ) : hasSearched && results.length === 0 ? (
                         <div className="text-center py-16">
-                            <Building className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-lg font-semibold text-gray-800">Nenhum imóvel encontrado</h3>
-                            <p className="mt-1 text-gray-500">Tente ajustar seus termos de busca.</p>
+                            <Building className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <h3 className="mt-2 text-lg font-semibold text-foreground">Nenhum imóvel encontrado</h3>
+                            <p className="mt-1 text-muted-foreground">Tente ajustar seus termos de busca.</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

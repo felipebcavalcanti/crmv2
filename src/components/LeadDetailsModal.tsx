@@ -36,10 +36,10 @@ const DetailRow = ({ icon, label, value }: { icon: React.ReactNode, label: strin
     if (!value && typeof value !== 'number') return null;
     return (
         <div className="flex items-start text-sm">
-            <div className="flex-shrink-0 w-6 mt-0.5 text-gray-500">{icon}</div>
+            <div className="flex-shrink-0 w-6 mt-0.5 text-muted-foreground">{icon}</div>
             <div className="flex-1">
-                <p className="font-semibold text-gray-800">{label}</p>
-                <p className="text-gray-600 break-words">{value}</p>
+                <p className="font-semibold text-foreground">{label}</p>
+                <p className="text-muted-foreground break-words">{value}</p>
             </div>
         </div>
     );
@@ -50,11 +50,11 @@ const EventItem = ({ event }: { event: LeadEvent }) => {
     return (
         <div className="flex items-start space-x-3 py-2">
             <div className="flex-shrink-0 pt-1">
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
             </div>
             <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-800">{event.event_type}</p>
-                <p className="text-xs text-gray-500">{format(parseISO(event.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                <p className="text-sm font-semibold text-foreground">{event.event_type}</p>
+                <p className="text-xs text-muted-foreground">{format(parseISO(event.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
             </div>
         </div>
     );
@@ -82,11 +82,11 @@ export const LeadDetailsModal = ({ lead, onClose, onMarkAsWon, onMarkAsLost }: L
   const isLeadActive = !lead.outcome;
 
   return (
-    <DialogContent className="sm:max-w-lg bg-white">
+    <DialogContent className="sm:max-w-lg bg-background">
       <DialogHeader>
         <div className="flex items-center gap-4">
             <Avatar className="w-12 h-12">
-                <AvatarFallback className="text-xl bg-blue-100 text-blue-700">
+                <AvatarFallback className="text-xl bg-primary/10 text-primary">
                     {lead.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
             </Avatar>
@@ -113,15 +113,15 @@ export const LeadDetailsModal = ({ lead, onClose, onMarkAsWon, onMarkAsLost }: L
 
         {/* NOVO: Seção de Histórico do Lead */}
         <div>
-            <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center">
-                <History className="w-4 h-4 mr-2 text-gray-500" />
+            <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center">
+                <History className="w-4 h-4 mr-2 text-muted-foreground" />
                 Histórico de Atividades
             </h3>
-            <div className="relative pl-4 border-l-2 border-gray-200">
+            <div className="relative pl-4 border-l-2 border-border">
                 {events.length > 0 ? (
                     events.map(event => <EventItem key={event.id} event={event} />)
                 ) : (
-                    <p className="text-xs text-gray-500 py-2">Nenhum evento registrado.</p>
+                    <p className="text-xs text-muted-foreground py-2">Nenhum evento registrado.</p>
                 )}
             </div>
         </div>

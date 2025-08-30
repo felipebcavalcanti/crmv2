@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Home, Flame, ThermometerSun, ThermometerSnowflake, Search, Plus, Phone, AlertCircle } from "lucide-react";
+import { Loader2, Home, Flame, ThermometerSun, ThermometerSnowflake, Plus, Phone, AlertCircle } from "lucide-react";
 import { useLeads } from "@/hooks/useLeads";
 import { Lead } from "@/lib/database";
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { differenceInDays, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import { DragDropContext, Droppable, Draggable, OnDragEndResponder } from "@hello-pangea/dnd";
 import { LeadDetailsModal } from "@/components/LeadDetailsModal";
@@ -35,20 +35,20 @@ const LeadCard = ({ lead, index, onClick }: { lead: Lead; index: number; onClick
         <Draggable draggableId={lead.id} index={index}>
             {(provided) => (
                 <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} onClick={onClick}>
-                    <Card className="mb-3 bg-white hover:shadow-lg transition-shadow border-l-4 border-transparent data-[temperature=QUENTE]:border-red-500 data-[temperature=MORNO]:border-yellow-500 data-[temperature=FRIO]:border-blue-500" data-temperature={lead.temperature}>
+                    <Card className="mb-3 bg-card hover:bg-accent/50 hover:shadow-lg transition-all border-l-4 border-transparent data-[temperature=QUENTE]:border-destructive data-[temperature=MORNO]:border-primary data-[temperature=FRIO]:border-blue-500" data-temperature={lead.temperature}>
                         <CardContent className="p-3">
-                            <p className="font-bold text-sm text-gray-900 mb-2 truncate">{lead.name}</p>
-                            <div className="space-y-1.5 text-xs text-gray-600">
+                            <p className="font-bold text-sm text-foreground mb-2 truncate">{lead.name}</p>
+                            <div className="space-y-1.5 text-xs text-muted-foreground">
                                 <div className="flex items-center"><TemperatureIcon temp={lead.temperature} /><span className="ml-1.5 font-semibold">{lead.temperature}</span></div>
                                 {lead.phone && (
                                     <div className="flex items-center">
-                                        <Phone className="w-4 h-4 mr-1.5 text-gray-400" />
+                                        <Phone className="w-4 h-4 mr-1.5 text-muted-foreground/70" />
                                         <span>{lead.phone}</span>
                                     </div>
                                 )}
-                                {lead.purpose && <div className="flex items-center"><Home className="w-4 h-4 mr-1.5 text-gray-400" /><span>{lead.purpose} | {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lead.desired_value || 0)}</span></div>}
+                                {lead.purpose && <div className="flex items-center"><Home className="w-4 h-4 mr-1.5 text-muted-foreground/70" /><span>{lead.purpose} | {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lead.desired_value || 0)}</span></div>}
                             </div>
-                            {isStagnant && <div className="flex items-center text-xs text-yellow-600 font-semibold mt-2 pt-2 border-t"><AlertCircle className="w-3 h-3 mr-1.5" />Estagnado há {daysSinceUpdate} dias</div>}
+                            {isStagnant && <div className="flex items-center text-xs text-yellow-500 font-semibold mt-2 pt-2 border-t border-border"><AlertCircle className="w-3 h-3 mr-1.5" />Estagnado há {daysSinceUpdate} dias</div>}
                         </CardContent>
                     </Card>
                 </div>
@@ -64,7 +64,7 @@ const LeadManagement = () => {
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showOriginDetails, setShowOriginDetails] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchQuery] = useState("");
     
     const initialFormState = { name: '', email: '', phone: '', temperature: 'MORNO' as Lead['temperature'], purpose: 'Venda' as Lead['purpose'], desired_value: null, origin: 'Redes Sociais' as Lead['origin'], origin_details: '', notes: '', next_task: null };
     const [newLeadData, setNewLeadData] = useState<any>(initialFormState);
@@ -150,21 +150,21 @@ const LeadManagement = () => {
         }
     };
     
-    if (loading) return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>;
-    if (error) return <div className="flex h-screen w-full items-center justify-center text-red-600"><p>Erro ao carregar os dados de leads: {error}</p></div>;
+    if (loading) return <div className="flex h-screen w-full items-center justify-center bg-background dark"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    if (error) return <div className="flex h-screen w-full items-center justify-center bg-background text-destructive dark"><p>Erro ao carregar os dados de leads: {error}</p></div>;
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
-            <div className="min-h-screen bg-gray-50/50 p-4 sm:p-8">
+            <div className="min-h-screen bg-background p-4 sm:p-8 dark">
                 <div className="max-w-full mx-auto">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Leads (CRM)</h1>
-                            <p className="text-gray-600 mt-1">Gerencie seu funil de vendas de forma visual e proativa.</p>
+                            <h1 className="text-3xl font-bold text-foreground tracking-tight">Leads (CRM)</h1>
+                            <p className="text-muted-foreground mt-1">Gerencie seu funil de vendas de forma visual e proativa.</p>
                         </div>
                         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-                            <DialogTrigger asChild><Button className="bg-blue-600 hover:bg-blue-700"><Plus className="w-4 h-4 mr-2" />Adicionar Lead</Button></DialogTrigger>
-                            <DialogContent className="sm:max-w-[525px] bg-white">
+                            <DialogTrigger asChild><Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Adicionar Lead</Button></DialogTrigger>
+                            <DialogContent className="sm:max-w-[525px] bg-card border-border">
                                 <DialogHeader><DialogTitle>Adicionar Novo Lead</DialogTitle><DialogDescription>Preencha as informações para iniciar o contato.</DialogDescription></DialogHeader>
                                 <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-6">
                                     {/* Formulário de adição de lead sem alterações */}
@@ -178,7 +178,7 @@ const LeadManagement = () => {
                                     {showOriginDetails && <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="origin_details" className="text-right">Indicado por</Label><Input id="origin_details" value={newLeadData.origin_details ?? ''} onChange={(e) => setNewLeadData({...newLeadData, origin_details: e.target.value})} className="col-span-3" placeholder="Nome de quem indicou"/></div>}
                                     <div className="grid grid-cols-4 items-start gap-4"><Label htmlFor="notes" className="text-right pt-2">Anotações</Label><Textarea id="notes" value={newLeadData.notes ?? ''} onChange={(e) => setNewLeadData({...newLeadData, notes: e.target.value})} className="col-span-3" placeholder="Detalhes importantes sobre o lead..."/></div>
                                 </div>
-                                <DialogFooter><Button variant="secondary" onClick={() => setIsAddModalOpen(false)}>Cancelar</Button><Button onClick={handleAddLead} className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isSubmitting ? "Salvando..." : "Salvar Lead"}</Button></DialogFooter>
+                                <DialogFooter><Button variant="secondary" onClick={() => setIsAddModalOpen(false)}>Cancelar</Button><Button onClick={handleAddLead} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isSubmitting ? "Salvando..." : "Salvar Lead"}</Button></DialogFooter>
                             </DialogContent>
                         </Dialog>
                     </div>
@@ -188,12 +188,12 @@ const LeadManagement = () => {
                         {stages.map(stage => (
                             <Droppable droppableId={stage.id} key={stage.id}>
                                 {(provided) => (
-                                    <div ref={provided.innerRef} {...provided.droppableProps} className="bg-gray-100 rounded-lg shadow-sm flex flex-col h-[calc(100vh-24rem)]">
-                                        <div className="p-3 border-b bg-white rounded-t-lg sticky top-0 z-10"><h3 className="font-semibold text-gray-800">{stage.name} <span className="text-sm font-normal text-gray-500">{leadsByStage[stage.id]?.length || 0}</span></h3></div>
+                                    <div ref={provided.innerRef} {...provided.droppableProps} className="bg-muted/30 border border-border rounded-lg shadow-sm flex flex-col h-[calc(100vh-24rem)]">
+                                        <div className="p-3 border-b border-border bg-card rounded-t-lg sticky top-0 z-10"><h3 className="font-semibold text-foreground">{stage.name} <span className="text-sm font-normal text-muted-foreground">({leadsByStage[stage.id]?.length || 0})</span></h3></div>
                                         <div className="p-2 flex-1 overflow-y-auto">
                                             {(leadsByStage[stage.id] || []).map((lead, index) => <LeadCard key={lead.id} lead={lead} index={index} onClick={() => handleOpenDetails(lead)} />)}
                                             {provided.placeholder}
-                                            {(leadsByStage[stage.id] || []).length === 0 && <div className="text-center pt-10 text-xs text-gray-500">Nenhum lead nesta etapa.</div>}
+                                            {(leadsByStage[stage.id] || []).length === 0 && <div className="text-center pt-10 text-xs text-muted-foreground">Nenhum lead nesta etapa.</div>}
                                         </div>
                                     </div>
                                 )}

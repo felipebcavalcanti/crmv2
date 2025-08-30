@@ -67,7 +67,7 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background">
       <DialogHeader>
         <DialogTitle>Novo Projeto</DialogTitle>
         <DialogDescription>
@@ -111,7 +111,7 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
             <SelectTrigger>
               <SelectValue placeholder={profilesLoading ? "Carregando..." : "Selecione um responsável"} />
             </SelectTrigger>
-            <SelectContent className="bg-white">
+            <SelectContent className="bg-background">
               {profiles.map((profile) => (
                 <SelectItem key={profile.id} value={profile.id}>
                   {profile.full_name || profile.email}
@@ -132,7 +132,7 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-white">
+              <SelectContent className="bg-background">
                 <SelectItem value="planning">Planejamento</SelectItem>
                 <SelectItem value="in-progress">Em Andamento</SelectItem>
                 <SelectItem value="review">Em Revisão</SelectItem>
@@ -150,7 +150,7 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-white">
+              <SelectContent className="bg-background">
                 <SelectItem value="low">Baixa</SelectItem>
                 <SelectItem value="medium">Média</SelectItem>
                 <SelectItem value="high">Alta</SelectItem>
@@ -179,7 +179,7 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-white" align="start">
+            <PopoverContent className="w-auto p-0 bg-background" align="start">
               <Calendar
                 mode="single"
                 selected={formData.deliveryDate}
@@ -208,11 +208,11 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
             {allocations.map((person, index) => (
               <div
                 key={index}
-                className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm"
+                className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-md text-sm"
               >
                 {person}
                 <X
-                  className="h-3 w-3 cursor-pointer hover:text-blue-600"
+                  className="h-3 w-3 cursor-pointer hover:text-primary"
                   onClick={() => handleRemoveAllocation(index)}
                 />
               </div>
@@ -236,7 +236,7 @@ export const AddProjectModal = ({ onAddProject, onClose }: AddProjectModalProps)
           <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="bg-primary hover:bg-primary/90">
             Criar Projeto
           </Button>
         </div>

@@ -55,10 +55,10 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="dark min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md bg-card border-border">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Cadastro</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center tracking-tight">Cadastro</CardTitle>
           <CardDescription className="text-center">
             Crie sua conta para acessar o sistema
           </CardDescription>
@@ -72,10 +72,10 @@ const Register = () => {
                 type="email"
                 placeholder="seu@email.com"
                 {...register('email')}
-                className={errors.email ? 'border-red-500' : ''}
+                className={errors.email ? 'border-destructive' : ''}
               />
               {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
+                <p className="text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
 
@@ -87,7 +87,7 @@ const Register = () => {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Sua senha"
                   {...register('password')}
-                  className={errors.password ? 'border-red-500 pr-10' : 'pr-10'}
+                  className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
                 />
                 <Button
                   type="button"
@@ -97,14 +97,14 @@ const Register = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
                 </Button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-500">{errors.password.message}</p>
+                <p className="text-sm text-destructive">{errors.password.message}</p>
               )}
             </div>
 
@@ -116,7 +116,7 @@ const Register = () => {
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="Confirme sua senha"
                   {...register('confirmPassword')}
-                  className={errors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
+                  className={errors.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
                 />
                 <Button
                   type="button"
@@ -126,14 +126,14 @@ const Register = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
                 </Button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
               )}
             </div>
 
@@ -143,8 +143,8 @@ const Register = () => {
           </form>
 
           <div className="mt-4 text-center text-sm">
-            <span className="text-gray-600">Já tem uma conta? </span>
-            <Link to="/login" className="text-blue-600 hover:underline">
+            <span className="text-muted-foreground">Já tem uma conta? </span>
+            <Link to="/login" className="text-primary hover:underline">
               Faça login
             </Link>
           </div>

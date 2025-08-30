@@ -12,12 +12,6 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { Project } from "@/pages/Index";
 import { cn } from "@/lib/utils";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 
@@ -83,48 +77,33 @@ export const AppSidebar = ({ projects = [] }: AppSidebarProps) => {
     navigate('/'); 
   };
   
-  const activeMenu = menuItems.find(item => item.submenus && location.pathname.startsWith(item.path));
 
   return (
-    <div className="w-64 h-full bg-white border-r border-gray-200 flex flex-col shadow-lg">
-      <div className="p-4 border-b">
+    <div className="w-full h-16 bg-slate-900 border-b border-slate-800 flex items-center shadow-lg">
+      <div className="px-6">
         <Link to="/dashboard">
-          <h1 className="text-2xl font-bold text-blue-600">CRM Imob</h1>
+          <h1 className="text-xl font-bold text-white">CRM Imob</h1>
         </Link>
       </div>
 
-      <div className="p-4 border-b">
-        <div className="flex items-center space-x-3">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-blue-500 text-white">
-              <User className="w-5 h-5" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 overflow-hidden">
-            <h3 className="text-sm font-semibold text-gray-900 truncate">
-              {user?.email || 'Usuário'}
-            </h3>
-            <p className="text-xs text-gray-600">Corretor</p>
-          </div>
-        </div>
-      </div>
-
-      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        <Accordion type="single" collapsible defaultValue={activeMenu?.id} className="w-full">
+      <nav className="flex-1 flex items-center justify-center">
+        <div className="flex items-center space-x-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             const isParentActive = item.submenus && location.pathname.startsWith(item.path);
 
-            // Lógica refinada para tratar itens únicos vs. accordions
             if (item.isSingle) {
               return (
                 <Link to={item.path} key={item.id}>
                   <Button
-                    variant={isActive ? "secondary" : "ghost"}
-                    className="w-full justify-start text-sm font-medium"
+                    variant="ghost"
+                    className={cn(
+                      "text-slate-300 hover:text-white hover:bg-slate-800",
+                      isActive && "bg-slate-800 text-white"
+                    )}
                   >
-                    <Icon className="w-4 h-4 mr-3" />
+                    <Icon className="w-4 h-4 mr-2" />
                     {item.label}
                   </Button>
                 </Link>
@@ -132,49 +111,61 @@ export const AppSidebar = ({ projects = [] }: AppSidebarProps) => {
             }
 
             return (
-              <AccordionItem value={item.id} key={item.id} className="border-b-0">
-                <AccordionTrigger 
+              <div key={item.id} className="relative group">
+                <Button
+                  variant="ghost"
                   className={cn(
-                    "py-2 px-3 hover:bg-gray-100 rounded-md text-sm font-medium hover:no-underline",
-                    isParentActive && "bg-slate-100 text-blue-600"
+                    "text-slate-300 hover:text-white hover:bg-slate-800",
+                    isParentActive && "bg-slate-800 text-white"
                   )}
                 >
-                  <div className="flex items-center">
-                    <Icon className="w-4 h-4 mr-3" />
-                    {item.label}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pl-6 pt-1">
-                  <div className="space-y-1">
-                    {item.submenus?.map((submenu) => {
-                      const isSubmenuActive = location.pathname === submenu.path;
-                      return (
-                        <Link to={submenu.path} key={submenu.id}>
-                           <Button
-                            variant={isSubmenuActive ? "secondary" : "ghost"}
-                            className="w-full justify-start h-8 text-sm"
-                          >
-                            {submenu.label}
-                          </Button>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                  <Icon className="w-4 h-4 mr-2" />
+                  {item.label}
+                </Button>
+                <div className="absolute top-full left-0 mt-1 bg-slate-900 border border-slate-800 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 min-w-[180px]">
+                  {item.submenus?.map((submenu) => {
+                    const isSubmenuActive = location.pathname === submenu.path;
+                    return (
+                      <Link to={submenu.path} key={submenu.id}>
+                        <Button
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800 rounded-none",
+                            isSubmenuActive && "bg-slate-800 text-white"
+                          )}
+                        >
+                          {submenu.label}
+                        </Button>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
-        </Accordion>
+        </div>
       </nav>
 
-      <div className="p-4 border-t mt-auto">
+      <div className="px-6 flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-slate-700 text-white">
+              <User className="w-4 h-4" />
+            </AvatarFallback>
+          </Avatar>
+          <div className="hidden md:block">
+            <p className="text-sm font-medium text-white">
+              {user?.email || 'Usuário'}
+            </p>
+            <p className="text-xs text-slate-400">Corretor</p>
+          </div>
+        </div>
         <Button
           onClick={handleLogout}
           variant="ghost"
-          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="text-slate-300 hover:text-red-400 hover:bg-slate-800"
         >
-          <LogOut className="w-4 h-4 mr-3" />
-          <span>Sair</span>
+          <LogOut className="w-4 h-4" />
         </Button>
       </div>
     </div>

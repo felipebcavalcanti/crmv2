@@ -34,30 +34,73 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
+    --success: 142.1 76.2% 36.3%; /* Verde para sucesso */
+    --success-foreground: 355.7 100% 97.3%;
+
+    --warning: 32.2 98.9% 56.1%; /* Amarelo/laranja para avisos */
+    --warning-foreground: 220.9 39.3% 11%;
+
+    --sport-primary: 271.5 81.3% 55.9%; /* Roxo esportivo */
+    --sport-secondary: 198.9 88.7% 48.4%; /* Azul esportivo */
+    --sport-accent: 47.9 95.8% 53.1%; /* Amarelo esportivo */
+
     --radius: 0.5rem;
   }
 
   .dark {
-    /* Tema escuro (sem alterações) */
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+    /* Tema escuro refinado inspirado no shadcn/ui */
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+    
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
+    
+    --primary: 25 95% 53%;
+    --primary-foreground: 224 71% 4%;
+    
+    --secondary: 215 27.9% 16.9%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    
+    --accent: 215 27.9% 16.9%;
     --accent-foreground: 210 40% 98%;
+    
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 25 95% 53%;
+
+    --success: 142.1 70.6% 45.3%;
+    --success-foreground: 144.9 80.4% 10%;
+
+    --warning: 32.2 98.9% 56.1%;
+    --warning-foreground: 220.9 39.3% 11%;
+
+    --sport-primary: 271.5 81.3% 55.9%;
+    --sport-secondary: 198.9 88.7% 48.4%;
+    --sport-accent: 47.9 95.8% 53.1%;
+
+    --sidebar-background: 224 71% 4%;
+    --sidebar-foreground: 213 31% 91%;
+    --sidebar-primary: 25 95% 53%;
+    --sidebar-primary-foreground: 224 71% 4%;
+    --sidebar-accent: 215 27.9% 16.9%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 27.9% 16.9%;
+    --sidebar-ring: 25 95% 53%;
+
+    --chart-1: 25 95% 53%;
+    --chart-2: 142.1 70.6% 45.3%;
+    --chart-3: 271.5 81.3% 55.9%;
+    --chart-4: 198.9 88.7% 48.4%;
+    --chart-5: 32.2 98.9% 56.1%;
   }
 }
 

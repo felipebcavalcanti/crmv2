@@ -24,11 +24,11 @@ const TaskItem = ({ task, onComplete }: { task: Task; onComplete: (taskId: strin
     };
 
     return (
-        <div className="flex items-center space-x-4 p-3 border-b hover:bg-gray-50 transition-colors">
+        <div className="flex items-center space-x-4 p-3 border-b border-border hover:bg-accent/50 transition-colors">
             <Checkbox id={`task-${task.id}`} onCheckedChange={() => onComplete(task.id)} />
             <div className="flex-1">
-                <p className="font-medium text-gray-800">{task.title}</p>
-                {task.lead_id && <p className="text-xs text-gray-500">Associado ao lead: [Nome do Lead]</p>}
+                <p className="font-medium text-foreground">{task.title}</p>
+                {task.lead_id && <p className="text-xs text-muted-foreground">Associado ao lead: [Nome do Lead]</p>}
             </div>
             <div className="flex items-center gap-4">
                 {task.due_date && (
@@ -75,26 +75,26 @@ const DailyMissionDashboard = () => {
     };
 
     if (loading) {
-        return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>;
+        return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
     }
 
     if (error) {
-        return <div className="flex h-screen w-full items-center justify-center text-red-600"><p>Erro ao carregar a Missão Diária: {error}</p></div>;
+        return <div className="flex h-screen w-full items-center justify-center text-destructive"><p>Erro ao carregar a Missão Diária: {error}</p></div>;
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50 p-4 sm:p-8">
+        <div className="dark min-h-screen bg-background p-4 sm:p-8">
             <div className="max-w-4xl mx-auto">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Missão Diária</h1>
-                        <p className="text-gray-600 mt-1">Sua lista de tarefas priorizadas para hoje.</p>
+                        <h1 className="text-3xl font-bold text-foreground tracking-tight">Missão Diária</h1>
+                        <p className="text-muted-foreground mt-1">Sua lista de tarefas priorizadas para hoje.</p>
                     </div>
                     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                         <DialogTrigger asChild>
-                            <Button className="bg-blue-600 hover:bg-blue-700"><Plus className="w-4 h-4 mr-2" />Nova Tarefa Manual</Button>
+                            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Nova Tarefa Manual</Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px] bg-white">
+                        <DialogContent className="sm:max-w-[425px] bg-card border-border">
                             <DialogHeader>
                                 <DialogTitle>Nova Tarefa Manual</DialogTitle>
                                 <DialogDescription>Adicione uma nova tarefa à sua lista.</DialogDescription>
@@ -122,7 +122,7 @@ const DailyMissionDashboard = () => {
                             </div>
                             <DialogFooter>
                                 <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-                                <Button onClick={handleAddTask} className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
+                                <Button onClick={handleAddTask} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
                                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     {isSubmitting ? "Salvando..." : "Salvar Tarefa"}
                                 </Button>
@@ -131,7 +131,7 @@ const DailyMissionDashboard = () => {
                     </Dialog>
                 </div>
 
-                <Card>
+                <Card className="bg-card border-border">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Flag />
@@ -147,8 +147,8 @@ const DailyMissionDashboard = () => {
                             </div>
                         ) : (
                             <div className="text-center py-16 px-6">
-                                <h3 className="text-lg font-semibold text-gray-800">Tudo em ordem!</h3>
-                                <p className="text-gray-500 mt-2">Você não tem tarefas pendentes na sua lista. Bom trabalho!</p>
+                                <h3 className="text-lg font-semibold text-foreground">Tudo em ordem!</h3>
+                                <p className="text-muted-foreground mt-2">Você não tem tarefas pendentes na sua lista. Bom trabalho!</p>
                             </div>
                         )}
                     </CardContent>

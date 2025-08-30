@@ -82,10 +82,10 @@ const PropertyNew = () => {
     };
   
     return (
-        <div className="min-h-screen bg-gray-50/50 p-8">
+        <div className="min-h-screen bg-background p-8 dark">
             <div className="max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">Cadastrar Novo Imóvel</h1>
-                <Card>
+                <h1 className="text-3xl font-bold text-foreground tracking-tight mb-8">Cadastrar Novo Imóvel</h1>
+                <Card className="bg-card border-border">
                     <CardContent className="p-6">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -106,7 +106,7 @@ const PropertyNew = () => {
                             </div>
                             <div className="flex justify-end gap-2 pt-4">
                                 <Button type="button" variant="secondary" onClick={() => navigate('/properties')}>Cancelar</Button>
-                                <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
+                                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
                                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     {isSubmitting ? "Salvando..." : "Salvar Imóvel"}
                                 </Button>

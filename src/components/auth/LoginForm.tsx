@@ -108,47 +108,47 @@ export const LoginForm = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email */}
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Mail className="absolute left-3 top-3 h-4 w-4 text-primary" />
             <Input
               id="email"
               type="email"
               placeholder="seu@email.com"
-              className={`pl-10 ${errors.email ? 'border-red-500 focus:border-red-500' : ''}`}
+              className={`pl-10 bg-background border-input text-foreground placeholder:text-muted-foreground focus:ring-ring focus:border-ring ${errors.email ? 'border-destructive focus:border-destructive focus:ring-destructive' : ''}`}
               {...register('email')}
               disabled={isLoading}
             />
           </div>
           {errors.email && (
-            <p className="text-sm text-red-600">{errors.email.message}</p>
+            <p className="text-sm text-destructive">{errors.email.message}</p>
           )}
         </div>
 
         {/* Senha */}
         <div className="space-y-2">
-          <Label htmlFor="password">Senha</Label>
+          <Label htmlFor="password" className="text-foreground font-medium">Senha</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-primary" />
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className={`pl-10 pr-10 ${errors.password ? 'border-red-500 focus:border-red-500' : ''}`}
+              className={`pl-10 pr-10 bg-background border-input text-foreground placeholder:text-muted-foreground focus:ring-ring focus:border-ring ${errors.password ? 'border-destructive focus:border-destructive focus:ring-destructive' : ''}`}
               {...register('password')}
               disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 h-4 w-4 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-3 h-4 w-4 text-primary hover:text-primary/80 transition-colors"
               disabled={isLoading}
             >
               {showPassword ? <EyeOff /> : <Eye />}
             </button>
           </div>
           {errors.password && (
-            <p className="text-sm text-red-600">{errors.password.message}</p>
+            <p className="text-sm text-destructive">{errors.password.message}</p>
           )}
         </div>
 
@@ -156,7 +156,7 @@ export const LoginForm = () => {
         <div className="text-right">
           <Link 
             to="/forgot-password" 
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
           >
             Esqueceu a senha?
           </Link>
@@ -165,7 +165,7 @@ export const LoginForm = () => {
         {/* Botão de login */}
         <Button 
           type="submit" 
-          className="w-full" 
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-colors" 
           disabled={isLoading}
         >
           {isLoading ? (
@@ -181,8 +181,8 @@ export const LoginForm = () => {
 
       {/* Link para cadastro */}
       <div className="text-center text-sm">
-        <span className="text-gray-600">Não tem uma conta? </span>
-        <Link to="/register" className="text-blue-600 hover:underline">
+        <span className="text-muted-foreground">Não tem uma conta? </span>
+        <Link to="/register" className="text-primary hover:text-primary/80 hover:underline transition-colors font-medium">
           Cadastre-se
         </Link>
       </div>

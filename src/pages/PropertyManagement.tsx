@@ -41,12 +41,12 @@ const PropertyManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-8">
+    <div className="min-h-screen bg-background p-8 dark">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">Imóveis</h1>
-                <p className="text-gray-600 mt-1">Gerencie e visualize todos os imóveis cadastrados.</p>
+                <h1 className="text-3xl font-bold text-foreground tracking-tight">Imóveis</h1>
+                <p className="text-muted-foreground mt-1">Gerencie e visualize todos os imóveis cadastrados.</p>
             </div>
             <div className="flex w-full md:w-auto gap-2">
                 <Input 
@@ -62,30 +62,30 @@ const PropertyManagement = () => {
             </div>
         </div>
 
-        <Card>
+        <Card className="bg-card border-border">
           <CardHeader><CardTitle>Lista de Imóveis</CardTitle></CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
+              <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
             ) : error ? (
-              <div className="text-center py-10"><p className="text-red-600">{error}</p></div>
+              <div className="text-center py-10"><p className="text-destructive">{error}</p></div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b"><th className="text-left py-3 px-4 font-semibold">Nome</th><th className="text-left py-3 px-4 font-semibold">Localização</th><th className="text-left py-3 px-4 font-semibold">Status</th><th className="text-left py-3 px-4 font-semibold">Valor</th><th className="text-left py-3 px-4 font-semibold">Ações</th></tr>
+                    <tr className="border-b border-border"><th className="text-left py-3 px-4 font-semibold text-foreground">Nome</th><th className="text-left py-3 px-4 font-semibold text-foreground">Localização</th><th className="text-left py-3 px-4 font-semibold text-foreground">Status</th><th className="text-left py-3 px-4 font-semibold text-foreground">Valor</th><th className="text-left py-3 px-4 font-semibold text-foreground">Ações</th></tr>
                   </thead>
                   <tbody>
                     {displayProperties.map((property) => (
                       <tr 
                         key={property.id} 
-                        className="border-b hover:bg-gray-100 cursor-pointer"
+                        className="border-b border-border hover:bg-accent/50 cursor-pointer transition-colors"
                         onClick={() => navigate(`/properties/${property.id}`)}
                       >
-                        <td className="py-4 px-4 font-medium">{property.name}</td>
-                        <td className="py-4 px-4 text-gray-600">{property.location}</td>
+                        <td className="py-4 px-4 font-medium text-foreground">{property.name}</td>
+                        <td className="py-4 px-4 text-muted-foreground">{property.location}</td>
                         <td className="py-4 px-4"><Badge variant={getStatusBadgeVariant(property.status)}>{property.status}</Badge></td>
-                        <td className="py-4 px-4 font-medium text-gray-800">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(property.price)}{property.purpose === 'Aluguel' ? '/mês' : ''}</td>
+                        <td className="py-4 px-4 font-medium text-foreground">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(property.price)}{property.purpose === 'Aluguel' ? '/mês' : ''}</td>
                         <td className="py-4 px-4">
                             <div className="flex gap-2">
                                 <Button size="sm" variant="secondary" onClick={(e) => e.stopPropagation()}>

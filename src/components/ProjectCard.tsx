@@ -30,10 +30,10 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed": return "bg-green-100 text-green-800";
-      case "in-progress": return "bg-blue-100 text-blue-800";
-      case "review": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "completed": return "bg-green-500/10 text-green-500";
+      case "in-progress": return "bg-primary/10 text-primary";
+      case "review": return "bg-yellow-500/10 text-yellow-500";
+      default: return "bg-muted text-muted-foreground";
     }
   };
 
@@ -48,9 +48,9 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "high": return "bg-red-100 text-red-800";
-      case "medium": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-green-100 text-green-800";
+      case "high": return "bg-destructive/10 text-destructive";
+      case "medium": return "bg-yellow-500/10 text-yellow-500";
+      default: return "bg-green-500/10 text-green-500";
     }
   };
 
@@ -97,8 +97,8 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   };
 
   const cardClasses = `
-    bg-white shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 
-    ${isHighPriority ? 'border-l-red-500' : 'border-l-blue-500'}
+    bg-background shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 
+    ${isHighPriority ? 'border-l-destructive' : 'border-l-primary'}
     relative overflow-hidden
   `.trim();
 
@@ -112,10 +112,10 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
         <CardHeader className="pb-3 relative z-10">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <CardTitle className="text-lg font-semibold text-gray-900 mb-1">
+              <CardTitle className="text-lg font-semibold text-foreground mb-1">
                 {project.name}
               </CardTitle>
-              <CardDescription className="text-sm text-gray-600 line-clamp-2">
+              <CardDescription className="text-sm text-muted-foreground line-clamp-2">
                 {project.description}
               </CardDescription>
             </div>
@@ -125,7 +125,7 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white">
+              <DropdownMenuContent align="end" className="bg-background">
                 <DropdownMenuItem
                   onClick={() => setIsDetailsModalOpen(true)}
                   className="cursor-pointer"
@@ -142,7 +142,7 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onDelete(project.id)}
-                  className="cursor-pointer text-red-600"
+                  className="cursor-pointer text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Excluir
@@ -164,24 +164,24 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
         <CardContent className="space-y-4 relative z-10">
           <div>
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-600">Progresso</span>
+              <span className="text-muted-foreground">Progresso</span>
               <span className="font-medium">{project.progress}%</span>
             </div>
             <Progress value={project.progress} className="h-2" />
           </div>
 
-          <div className="flex items-center text-sm text-gray-600">
+          <div className="flex items-center text-sm text-muted-foreground">
             <Calendar className="w-4 h-4 mr-2" />
             <span>Entrega: {format(new Date(project.deliveryDate), "dd/MM/yyyy", { locale: ptBR })}</span>
           </div>
           
           {/* Exibição do Responsável */}
-          <div className="flex items-center text-sm text-gray-600">
+          <div className="flex items-center text-sm text-muted-foreground">
             <User className="w-4 h-4 mr-2" />
             <span>Responsável: {responsible ? responsible.full_name : 'N/D'}</span>
           </div>
 
-          <div className="flex items-center text-sm text-gray-600">
+          <div className="flex items-center text-sm text-muted-foreground">
             <Users className="w-4 h-4 mr-2" />
             <span>{project.allocations.length} pessoa(s) alocada(s)</span>
           </div>
