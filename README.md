@@ -101,3 +101,78 @@ qj6UJIMJqVCo7qwL
   4. Task Management: Acompanhamento de atividades
   5. Project Tracking: Gestão de empreendimentos
   6. Analytics: Dashboard com métricas (em desenvolvimento) -->
+
+
+  <!-- Tecnologias e Stack
+
+  - Frontend: React 18 + TypeScript + Vite
+  - Roteamento: React Router DOM
+  - UI Framework: Radix UI + ShadcnUI + Tailwind CSS
+  - Estado: React Query (TanStack Query)
+  - Backend: Supabase (PostgreSQL + Auth)
+  - Validação: Zod
+  - Build: Vite com plugins React
+
+  Arquitetura do Sistema
+
+  1. Autenticação
+  - Context-based auth com AuthContext.tsx
+  - Sistema completo com login, registro, recuperação de senha
+  - Proteção de rotas via ProtectedRoute
+  - Persistência com cookies usando Supabase
+
+  2. Layout e Navegação
+  - Layout responsivo com AppLayout e AppSidebar
+  - Navegação por accordion no sidebar
+  - Suporte mobile com drawer
+
+  3. Módulos Principais
+  - Dashboard (Index.tsx): Visão geral com métricas e tarefas diárias
+  - Projetos: Gestão de projetos imobiliários
+  - Imóveis: CRUD completo de propriedades
+  - Leads/CRM: Funil de vendas com Kanban
+  - Marketing: Módulo para campanhas
+  - Tarefas: Sistema de missão diária
+
+  4. Hooks Personalizados
+  - useAuth: Gerenciamento de autenticação
+  - useLeads: Operações de leads e Kanban
+  - useProjects: CRUD de projetos
+  - useProperties: Gestão de imóveis
+  - useTasks: Sistema de tarefas
+
+  5. Camada de Dados
+  - database.ts: Abstração completa do Supabase
+  - Operações CRUD para todas as entidades
+  - Tratamento de erros padronizado
+  - Funções RPC para operações complexas
+
+  Estrutura de Pastas
+
+  src/
+  ├── components/      # Componentes reutilizáveis e UI
+  ├── contexts/        # Contexts (Auth)
+  ├── hooks/          # Hooks customizados
+  ├── lib/            # Utilitários (database, supabase, utils)
+  ├── pages/          # Páginas/rotas da aplicação
+  └── utils/          # Tipos e dados auxiliares
+
+  Padrões Implementados
+
+  - Component Pattern: Componentes funcionais com hooks
+  - Custom Hooks: Lógica de negócio isolada
+  - Context Pattern: Estado global para auth
+  - Repository Pattern: Camada de abstração do banco
+  - Error Boundary: Tratamento de erros padronizado
+  - Responsive Design: Mobile-first com Tailwind
+
+  Recursos Implementados
+
+  - Sistema de autenticação completo
+  - Dashboard com métricas em tempo real
+  - Kanban para gestão de leads
+  - CRUD de imóveis com pesquisa
+  - Sistema de tarefas/missões diárias
+  - Gestão de projetos
+  - Histórico de eventos (audit trail)
+  - Layout responsivo -->
